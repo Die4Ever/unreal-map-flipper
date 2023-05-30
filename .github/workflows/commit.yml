@@ -1,0 +1,18 @@
+name: commit
+'on':
+  - push
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - run: python3 -m compileall -q . 2>&1
+        shell: bash
+      - run: python3 installer/tests.py 2>&1
+        shell: bash
