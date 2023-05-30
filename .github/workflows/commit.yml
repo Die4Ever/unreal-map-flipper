@@ -12,7 +12,6 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
+      - run: pip3 install -r requirements.txt 2>&1
       - run: python3 -m compileall -q . 2>&1
-        shell: bash
       - run: python3 tests.py 2>&1
-        shell: bash
