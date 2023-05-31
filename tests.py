@@ -145,20 +145,22 @@ class T3DTestCase(unittest.TestCase):
         woman_desired_yaw = 38256 # or -27279
         pinball_yaw = -32872
         pinball_desired_yaw = 32872 # or -32663
+        rot_offset = 16384
 
-        rm = mirror_rotation((0, man_yaw, 0))
+        rm = mirror_rotation((0, man_yaw, 0), rot_offset)
         self.assertRotatorsAlmostEqual(rm, (0, man_desired_yaw, 0))
-        rm = mirror_rotation((0, man_positive_yaw, 0))
+        rm = mirror_rotation((0, man_positive_yaw, 0), rot_offset)
         self.assertRotatorsAlmostEqual(rm, (0, man_desired_yaw, 0))
-        rm = mirror_rotation((0, woman_yaw, 0))
+        rm = mirror_rotation((0, woman_yaw, 0), rot_offset)
         self.assertRotatorsAlmostEqual(rm, (0, woman_desired_yaw, 0))
-        rm = mirror_rotation((0, pinball_yaw, 0))
-        # BUG: the pinball machine model is sideways, so the math doesn't match the appearance, this might be impossible to truly fix?
-        #self.assertRotatorsAlmostEqual(rm, (0, pinball_desired_yaw, 0))
+        rot_offset = classes_rot_offsets['Pinball']
+        rm = mirror_rotation((0, pinball_yaw, 0), rot_offset)
+        self.assertRotatorsAlmostEqual(rm, (0, pinball_desired_yaw, 0))
     
     def test_read_polygon(self):
         polygonfile.reset()
         actor = Actor('Begin Actor Class=Test Name=Test1')
+        self.assertEqual(actor.classname, 'Test')
         actor.ReadPolygon(polygonfile.readline(), polygonfile, None)
 
         self.assertEqual(actor.lines[0], 'Begin Actor Class=Test Name=Test1')
@@ -170,6 +172,7 @@ class T3DTestCase(unittest.TestCase):
         print('test ReadBrush first')
         brushfile.reset()
         actor = Actor(brushfile.readline())
+        self.assertEqual(actor.classname, 'Brush')
         actor.ReadBrush(brushfile.readline(), brushfile, None)
 
         self.assertEqual(actor.lines[0], 'Begin Actor Class=Brush Name=Brush49')
@@ -180,6 +183,7 @@ class T3DTestCase(unittest.TestCase):
         print('now test Actor::Read')
         brushfile.reset()
         actor = Actor(brushfile.readline())
+        self.assertEqual(actor.classname, 'Brush')
         actor.Read(brushfile, None)
 
         self.assertEqual(actor.lines[0], 'Begin Actor Class=Brush Name=Brush49')
@@ -192,6 +196,7 @@ class T3DTestCase(unittest.TestCase):
         actorfile.reset()
         self.assertEqual(actorfile.readline(), 'Begin Map')
         actor = Actor(actorfile.readline())
+        self.assertEqual(actor.classname, 'Jock')
         actor.Read(actorfile, None)
 
         self.assertEqual(actorfile.readline(), 'Begin Actor Class=AmbientSound Name=AmbientSound0')

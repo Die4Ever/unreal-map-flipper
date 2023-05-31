@@ -10,16 +10,24 @@ loc = re.compile(r'^(\s+\w+)=\((X=' + coord + ')?,?(Y=' + coord + ')?,?(Z=' + co
 axis = r'(-?\d+)'
 rot = re.compile(r'^(\s+[^=]+)=\((Pitch=' +axis+ r')?,?(Yaw=' +axis+ r')?,?(Roll=' +axis+ r')?\)(\s*)$')
 
+getclassname = re.compile(r'^Begin Actor Class=([^ ]+) Name=([^ ]+)\s*$')
+
+# some models like the pinball machine are sideways, so the math doesn't match the appearance
+classes_rot_offsets = dict(
+    Pinball=32768,
+    Chair1=32768,
+)
+
 def MirrorList(l):
     # ensure proper vertex order
     return l[0:1] + l[-1:0:-1]
 
-def mirror_rotation(r):
+def mirror_rotation(r, offset):
     yaw = int(r[1])
     yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
-    yaw += 16384 # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
+    yaw += offset # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
     yaw = -yaw
-    yaw -= 16384 # undo the offset
+    yaw -= offset # undo the offset
     yaw %= 65535
     return (r[0], yaw, r[2])
 
@@ -36,6 +44,9 @@ def FormatPolyCoord(f):
 class Actor:
     def __init__(self, line:str):
         self.lines = [line]
+        match = getclassname.match(line)
+        self.classname = match.group(1)
+        self.objectname = match.group(2)
     
     def Read(self, file, mult_coords:tuple|None):
         try:
@@ -90,7 +101,8 @@ class Actor:
             roll = 0
 
         # TODO: this is only correct when mirroring X
-        (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll))
+        rot_offset = classes_rot_offsets.get(self.classname, 16384)
+        (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
         line = match.group(1) + '=(Pitch='+str(pitch)+',Yaw='+str(yaw)+',Roll='+str(roll)+')' + match.group(8)
         return line
     
@@ -156,7 +168,7 @@ class Actor:
         y = FormatPolyCoord(y)
         z *= mult_coords[2]
         z = FormatPolyCoord(z)
-        
+
         line = match.group(1) + x +',' + y +',' + z + match.group(8)
         return line
     
