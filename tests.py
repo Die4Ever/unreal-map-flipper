@@ -128,6 +128,33 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(s, '+00000.100000')
         s = FormatPolyCoord(-0.1)
         self.assertEqual(s, '-00000.100000')
+
+    def assertRotatorsAlmostEqual(self, r, r2):
+        print(r,'vs',r2)
+        self.assertTrue( abs(r[0]-r2[0]) <3, 'assertRotatorsAlmostEqual pitch ' +str(r[0])+' vs '+str(r2[0]) )
+        self.assertTrue( abs(r[1]-r2[1]) <3, 'assertRotatorsAlmostEqual yaw ' +str(r[1])+' vs '+str(r2[1]) )
+        self.assertTrue( abs(r[2]-r2[2]) <3, 'assertRotatorsAlmostEqual roll ' +str(r[2])+' vs '+str(r2[2]) )
+
+    def test_rotators(self):        
+        # people talking in bar
+        print('try to fix the people in the bar')
+        man_yaw = -43264 # 22271 in positive terms, but this is what the map file says
+        man_positive_yaw = 22271
+        man_desired_yaw = 10496
+        woman_yaw = -71024 # -5489 normalized, or 60046 in positive, but this is what the map file says
+        woman_desired_yaw = 38256 # or -27279
+        pinball_yaw = -32872
+        pinball_desired_yaw = 32872 # or -32663
+
+        rm = mirror_rotation((0, man_yaw, 0))
+        self.assertRotatorsAlmostEqual(rm, (0, man_desired_yaw, 0))
+        rm = mirror_rotation((0, man_positive_yaw, 0))
+        self.assertRotatorsAlmostEqual(rm, (0, man_desired_yaw, 0))
+        rm = mirror_rotation((0, woman_yaw, 0))
+        self.assertRotatorsAlmostEqual(rm, (0, woman_desired_yaw, 0))
+        rm = mirror_rotation((0, pinball_yaw, 0))
+        # BUG: the pinball machine model is sideways, so the math doesn't match the appearance, this might be impossible to truly fix?
+        #self.assertRotatorsAlmostEqual(rm, (0, pinball_desired_yaw, 0))
     
     def test_read_polygon(self):
         polygonfile.reset()

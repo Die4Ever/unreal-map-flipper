@@ -7,9 +7,21 @@ poly = re.compile(r'^(\s*Vertex\s+)'+coord+','+coord+','+coord+r'(\s*$)')
 coord = r'(-?\d+(\.\d+)?)'
 loc = re.compile(r'^(\s+\w+)=\((X=' + coord + ')?,?(Y=' + coord + ')?,?(Z=' + coord + ')?\)(\s*)$')
 
+axis = r'(-?\d+)'
+rot = re.compile(r'^(\s+[^=]+)=\((Pitch=' +axis+ r')?,?(Yaw=' +axis+ r')?,?(Roll=' +axis+ r')?\)(\s*)$')
+
 def MirrorList(l):
     # ensure proper vertex order
     return l[0:1] + l[-1:0:-1]
+
+def mirror_rotation(r):
+    yaw = int(r[1])
+    yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
+    yaw += 16384 # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
+    yaw = -yaw
+    yaw -= 16384 # undo the offset
+    yaw %= 65535
+    return (r[0], yaw, r[2])
 
 def FormatPolyCoord(f):
     posi = f >= 0
@@ -37,6 +49,51 @@ class Actor:
     def __str__(self):
         return ''.join(self.lines)
     
+    def ProcLoc(self, line:str, mult_coords:tuple|None) -> str:
+        if not mult_coords:
+            return line
+        match = loc.match(line)
+
+        x = match.group(3)
+        if not x:
+            x = 0
+        x = float(x) * mult_coords[0]
+
+        y = match.group(6)
+        if not y:
+            y = 0
+        y = float(y) * mult_coords[1]
+
+        z = match.group(9)
+        if not z:
+            z = 0
+        z = float(z) * mult_coords[2]
+
+        line = match.group(1) + '=(X=' + str(x) + ',Y=' + str(y) + ',Z=' + str(z) + ')' + match.group(11)
+        return line
+    
+    def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
+        if not mult_coords:
+            return line
+        match = rot.match(line)
+
+        pitch = match.group(3)
+        if not pitch:
+            pitch = 0
+
+        yaw = match.group(5)
+        if not yaw:
+            yaw = 0
+
+        roll = match.group(7)
+        if not roll:
+            roll = 0
+
+        # TODO: this is only correct when mirroring X
+        (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll))
+        line = match.group(1) + '=(Pitch='+str(pitch)+',Yaw='+str(yaw)+',Roll='+str(roll)+')' + match.group(8)
+        return line
+    
     def _Read(self, file, mult_coords:tuple|None):
         line:str = file.readline()
         while line:
@@ -47,25 +104,17 @@ class Actor:
                 or stripped.startswith('OldLocation=')
                 or stripped.startswith('PrePivot=')
                 or stripped.startswith('BasePos=')):
-                if mult_coords:
-                    match = loc.match(line)
-                    x = match.group(3)
-                    if not x:
-                        x = 0
-                    x = str(float(x) * mult_coords[0])
-                    y = match.group(6)
-                    if not y:
-                        y = 0
-                    y = str(float(y) * mult_coords[1])
-                    z = match.group(9)
-                    if not z:
-                        z = 0
-                    z = str(float(z) * mult_coords[2])
-                    line = match.group(1) + '=(X=' + x + ',Y=' + y + ',Z= ' + z + ')' + match.group(11)
+                # parse and multiply
+                line = self.ProcLoc(line, mult_coords)
+
             elif (stripped.startswith('Rotation=')
                   or stripped.startswith('BaseRot=')
-                  or stripped.startswith('SavedRot=')):
-                pass# TODO
+                  or stripped.startswith('SavedRot=')
+                  or stripped.startswith('KeyRot')
+                  or stripped.startswith('ViewRotation')):
+                # parse and fix
+                line = self.ProcRot(line, mult_coords)
+
             elif stripped.startswith('Begin Brush '):
                 self.ReadBrush(line, file, mult_coords)
                 line:str = file.readline()
@@ -94,6 +143,23 @@ class Actor:
         
         raise RuntimeError('unexpected end of brush?')
 
+    def AdjustVert(self, line:str, mult_coords) -> str:
+        # TODO: convert coords to world space, perform mirror, then convert back to object space for saving
+        match = poly.match(line)
+        x = float(match.group(2))
+        y = float(match.group(4))
+        z = float(match.group(6))
+
+        x *= mult_coords[0]
+        x = FormatPolyCoord(x)
+        y *= mult_coords[1]
+        y = FormatPolyCoord(y)
+        z *= mult_coords[2]
+        z = FormatPolyCoord(z)
+        
+        line = match.group(1) + x +',' + y +',' + z + match.group(8)
+        return line
+    
     def ReadPolygon(self, line:str, file, mult_coords) -> None:
         start = None
         while line:
@@ -103,18 +169,7 @@ class Actor:
             if stripped.startswith('Vertex ') and mult_coords:
                 if not start:
                     start = len(self.lines)-1
-                match = poly.match(line)
-                x = match.group(2)
-                y = match.group(4)
-                z = match.group(6)
-                # does the import process care about the exact format and number of decimal places?
-                x = float(x)*mult_coords[0]
-                x = FormatPolyCoord(x)
-                y = float(y)*mult_coords[1]
-                y = FormatPolyCoord(y)
-                z = float(z)*mult_coords[2]
-                z = FormatPolyCoord(z)
-                line = match.group(1) + x +',' + y +',' + z + match.group(8)
+                line = self.AdjustVert(line, mult_coords)
 
             self.lines.append(line)
             if stripped == 'End Polygon':
