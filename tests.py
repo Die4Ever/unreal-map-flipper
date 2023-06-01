@@ -173,11 +173,12 @@ class T3DTestCase(unittest.TestCase):
         brushfile.reset()
         actor = Actor(brushfile.readline())
         self.assertEqual(actor.classname, 'Brush')
-        actor.ReadBrush(brushfile.readline(), brushfile, None)
+        ret = actor.ReadBrush(brushfile.readline(), brushfile, None)
 
         self.assertEqual(actor.lines[0], 'Begin Actor Class=Brush Name=Brush49')
         self.assertEqual(actor.lines[1], '    Begin Brush Name=Model14')
-        self.assertEqual(actor.lines[-1], '    End Brush')
+        self.assertEqual(actor.lines[-1], '       End PolyList')
+        self.assertEqual(ret, '    End Brush')
         self.assertEqual(brushfile.readline(), '    Brush=Model\'MyLevel.Model14\'')
 
         print('now test Actor::Read')

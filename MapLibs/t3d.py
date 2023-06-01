@@ -25,9 +25,11 @@ classes_rot_offsets = dict(
     Brush=0,
 )
 
+# keep list of vertices counter-clockwise
 def MirrorList(l):
     # ensure proper vertex order
     return l[0:1] + l[-1:0:-1]
+
 
 def mirror_rotation(r, offset):
     yaw = int(r[1])
@@ -38,6 +40,8 @@ def mirror_rotation(r, offset):
     yaw %= 65535
     return (r[0], yaw, r[2])
 
+
+# t3d files are really strict about the formatting of poly coords
 def FormatPolyCoord(f):
     posi = f >= 0
     f = abs(f)
@@ -48,6 +52,7 @@ def FormatPolyCoord(f):
     s += '{:.6f}'.format(f)[1:]
     return s
 
+
 class Actor:
     def __init__(self, line:str):
         self.lines = [line]
@@ -57,6 +62,7 @@ class Actor:
         self.polylist = None
         self.props = dict()
     
+
     def Read(self, file, mult_coords:tuple|None):
         try:
             self._Read(file, mult_coords)
@@ -66,14 +72,18 @@ class Actor:
             print(e)
             raise
 
+
     def __str__(self):
         return ''.join(self.lines)
     
+
     def IsBrush(self) -> bool:
         return self.classname in ['Brush', 'Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover']
 
+
     def IsMover(self) -> bool:
         return self.classname in ['Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover']
+
 
     def Finalize(self):# TODO: more checks in finalize
         if self.classname=='Brush':
@@ -82,10 +92,11 @@ class Actor:
             assert not self.polylist
         if self.IsMover() and 'PostScale' not in self.props:
             line = '    PostScale=(Scale=(X={},Y={},Z={}),SheerAxis=SHEER_ZX)\n'.format(-1,1,1)
+            self.props['PostScale'] = len(self.lines)-1
             self.lines.insert(-1, line)
-            self.props['PostScale'] = line
             raise NotImplementedError('TODO: missing PostScale in Finalize')
     
+
     def ProcLoc(self, line:str, mult_coords:tuple|None) -> str:
         if not mult_coords:
             return line
@@ -109,6 +120,7 @@ class Actor:
         line = match.group(1) + '=(X={},Y={},Z={})'.format(x,y,z) + match.group(11)
         return line
     
+
     def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
         if not mult_coords:
             return line
@@ -135,6 +147,7 @@ class Actor:
         line = match.group(1) + '=(Pitch={},Yaw={},Roll={})'.format(pitch,yaw,roll) + match.group(8)
         return line
     
+
     def FixMoverPostScale(self, line:str, mult_coords) -> str:
         m = scale_regex.match(line)
         x = m.group(4)
@@ -152,14 +165,12 @@ class Actor:
         line = m.group(1) + '=(Scale=' + '(X={},Y={},Z={})'.format(x,y,z) + ',' + m.group(12) + m.group(13)
         return line
     
+
     def _Read(self, file, mult_coords:tuple|None):
         # TODO: save rotation, location, prepivot, and polylist?
         line:str = file.readline()
         while line:
             stripped:str = line.strip()
-            prop = prop_regex.match(stripped)
-            if prop:
-                self.props[prop.group(1)] = line
             
             if (stripped.startswith('Location=')
                 or stripped.startswith('BasePos=')
@@ -177,16 +188,20 @@ class Actor:
                   or stripped.startswith('ViewRotation')):
                 # parse and fix
                 line = self.ProcRot(line, mult_coords)
+
             elif stripped.startswith('PostScale') and self.IsMover():
                 line = self.FixMoverPostScale(line, mult_coords)
 
             elif stripped.startswith('Begin Brush '):
-                self.ReadBrush(line, file, mult_coords)
-                line:str = file.readline()
-                continue# HACK: don't append again, but we need to read the next line, yuck
+                stripped = '' # don't try to add this as a property
+                line = self.ReadBrush(line, file, mult_coords)
+
             elif stripped.startswith('Begin '):
                 raise NotImplementedError('unknown property: ' + line + ', in actor: ' + self.lines[0])
 
+            prop = prop_regex.match(stripped)
+            if prop:
+                self.props[prop.group(1)] = len(self.lines)
             self.lines.append(line)
             if stripped == 'End Actor':
                 self.Finalize()
@@ -195,21 +210,23 @@ class Actor:
         
         raise RuntimeError('unexpected end of actor?')
     
-    def ReadBrush(self, line:str, file, mult_coords) -> None:
+
+    def ReadBrush(self, line:str, file, mult_coords) -> str:
         if not self.IsBrush():
             raise RuntimeError('unexpected Brush in class '+self.classname)
+        
         while line:
             stripped:str = line.strip()
             if stripped.startswith('Begin Polygon '):
                 self.ReadPolygon(line, file, mult_coords)
+            elif stripped == 'End Brush':
+                return line
             else:
                 self.lines.append(line)
-            
-            if stripped == 'End Brush':
-                return
             line:str = file.readline()
         
         raise RuntimeError('unexpected end of brush?')
+
 
     def AdjustVert(self, line:str, mult_coords) -> str:
         # TODO: convert coords to world space, perform mirror, then convert back to object space for saving
@@ -230,6 +247,7 @@ class Actor:
         line = match.group(1) + '{},{},{}'.format(x,y,z) + match.group(8)
         return line
     
+
     def ReadPolygon(self, line:str, file, mult_coords) -> None:
         start = None
         while line:
@@ -261,6 +279,7 @@ class Actor:
             line:str = file.readline()
         
         raise RuntimeError('unexpected end of polygon?')
+
 
 class Map:
     def __init__(self):
