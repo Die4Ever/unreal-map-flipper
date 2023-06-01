@@ -180,6 +180,8 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actor.lines[-1], '       End PolyList')
         self.assertEqual(ret, '    End Brush')
         self.assertEqual(brushfile.readline(), '    Brush=Model\'MyLevel.Model14\'')
+        self.assertTrue(actor.IsBrush())
+        self.assertFalse(actor.IsMover())
 
         print('now test Actor::Read')
         brushfile.reset()
@@ -198,6 +200,8 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actorfile.readline(), 'Begin Map')
         actor = Actor(actorfile.readline())
         self.assertEqual(actor.classname, 'Jock')
+        self.assertFalse(actor.IsBrush())
+        self.assertFalse(actor.IsMover())
         actor.Read(actorfile, None)
 
         self.assertEqual(actorfile.readline(), 'Begin Actor Class=AmbientSound Name=AmbientSound0')

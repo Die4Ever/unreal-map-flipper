@@ -54,6 +54,9 @@ def FormatPolyCoord(f):
 
 
 class Actor:
+    mover_classes = set(('Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover', 'BreakableWall'))
+    brush_classes = set(('Brush', *mover_classes))
+
     def __init__(self, line:str):
         self.lines = [line]
         match = getclassname.match(line)
@@ -78,11 +81,11 @@ class Actor:
     
 
     def IsBrush(self) -> bool:
-        return self.classname in ['Brush', 'Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover']
+        return self.classname in self.brush_classes
 
 
     def IsMover(self) -> bool:
-        return self.classname in ['Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover']
+        return self.classname in self.mover_classes
 
 
     def Finalize(self):# TODO: more checks in finalize
@@ -220,7 +223,7 @@ class Actor:
             if stripped.startswith('Begin Polygon '):
                 self.ReadPolygon(line, file, mult_coords)
             elif stripped == 'End Brush':
-                return line
+                return line # let the caller append this line
             else:
                 self.lines.append(line)
             line:str = file.readline()
