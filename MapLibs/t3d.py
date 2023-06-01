@@ -61,10 +61,15 @@ class Actor:
 
     def __str__(self):
         return ''.join(self.lines)
+    
+    def IsBrush(self) -> bool:
+        return self.classname in ['Brush', 'Mover', 'DeusExMover', 'BreakableGlass']
 
-    def Finalize(self):# TODO:
-        if self.classname=='Brush':
+    def Finalize(self):# TODO: more checks in finalize
+        if self.IsBrush():
             assert self.polylist
+        else:
+            assert not self.polylist
     
     def ProcLoc(self, line:str, mult_coords:tuple|None) -> str:
         if not mult_coords:
@@ -107,7 +112,10 @@ class Actor:
             roll = 0
 
         # TODO: this is only correct when mirroring X
-        rot_offset = classes_rot_offsets.get(self.classname, 16384)
+        classname = self.classname
+        if self.IsBrush():
+            classname = 'Brush'
+        rot_offset = classes_rot_offsets.get(classname, 16384)
         (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
         line = match.group(1) + '=(Pitch='+str(pitch)+',Yaw='+str(yaw)+',Roll='+str(roll)+')' + match.group(8)
         return line
