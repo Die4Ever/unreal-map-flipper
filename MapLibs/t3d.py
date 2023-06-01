@@ -5,12 +5,18 @@ coord = r'((\+|-)\d+\.\d+)'
 poly = re.compile(r'^(\s*Vertex\s+)'+coord+','+coord+','+coord+r'(\s*$)')
 
 coord = r'(-?\d+(\.\d+)?)'
-loc = re.compile(r'^(\s+\w+)=\((X=' + coord + ')?,?(Y=' + coord + ')?,?(Z=' + coord + ')?\)(\s*)$')
+vect_pattern = r'\((X=' + coord + ')?,?(Y=' + coord + ')?,?(Z=' + coord + ')?\)'
+vect_regex = re.compile(vect_pattern)
+loc = re.compile(r'^(\s+\w+)=' + vect_pattern + r'(\s*)$')
 
 axis = r'(-?\d+)'
 rot = re.compile(r'^(\s+[^=]+)=\((Pitch=' +axis+ r')?,?(Yaw=' +axis+ r')?,?(Roll=' +axis+ r')?\)(\s*)$')
 
 getclassname = re.compile(r'^Begin Actor Class=([^ ]+) Name=([^ ]+)\s*$')
+
+prop_regex = re.compile(r'^\s*([^=]+)=.*$')
+
+scale_regex = re.compile(r'^([^=]+)=\((Scale=' + vect_pattern + r',)?(.*\))(\s*)$')
 
 # some models like the pinball machine are sideways, so the math doesn't match the appearance
 classes_rot_offsets = dict(
@@ -49,6 +55,7 @@ class Actor:
         self.classname = match.group(1)
         self.objectname = match.group(2)
         self.polylist = None
+        self.props = dict()
     
     def Read(self, file, mult_coords:tuple|None):
         try:
@@ -63,13 +70,21 @@ class Actor:
         return ''.join(self.lines)
     
     def IsBrush(self) -> bool:
-        return self.classname in ['Brush', 'Mover', 'DeusExMover', 'BreakableGlass']
+        return self.classname in ['Brush', 'Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover']
+
+    def IsMover(self) -> bool:
+        return self.classname in ['Mover', 'DeusExMover', 'BreakableGlass', 'ElevatorMover', 'MultiMover']
 
     def Finalize(self):# TODO: more checks in finalize
-        if self.IsBrush():
+        if self.classname=='Brush':
             assert self.polylist
         else:
             assert not self.polylist
+        if self.IsMover() and 'PostScale' not in self.props:
+            line = '    PostScale=(Scale=(X={},Y={},Z={}),SheerAxis=SHEER_ZX)\n'.format(-1,1,1)
+            self.lines.insert(-1, line)
+            self.props['PostScale'] = line
+            raise NotImplementedError('TODO: missing PostScale in Finalize')
     
     def ProcLoc(self, line:str, mult_coords:tuple|None) -> str:
         if not mult_coords:
@@ -91,7 +106,7 @@ class Actor:
             z = 0
         z = float(z) * mult_coords[2]
 
-        line = match.group(1) + '=(X=' + str(x) + ',Y=' + str(y) + ',Z=' + str(z) + ')' + match.group(11)
+        line = match.group(1) + '=(X={},Y={},Z={})'.format(x,y,z) + match.group(11)
         return line
     
     def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
@@ -117,7 +132,24 @@ class Actor:
             classname = 'Brush'
         rot_offset = classes_rot_offsets.get(classname, 16384)
         (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
-        line = match.group(1) + '=(Pitch='+str(pitch)+',Yaw='+str(yaw)+',Roll='+str(roll)+')' + match.group(8)
+        line = match.group(1) + '=(Pitch={},Yaw={},Roll={})'.format(pitch,yaw,roll) + match.group(8)
+        return line
+    
+    def FixMoverPostScale(self, line:str, mult_coords) -> str:
+        m = scale_regex.match(line)
+        x = m.group(4)
+        if not x:
+            x=1
+        y = m.group(7)
+        if not y:
+            y=1
+        z = m.group(10)
+        if not z:
+            z=1
+        x = float(x) * mult_coords[0]
+        y = float(y) * mult_coords[1]
+        z = float(z) * mult_coords[2]
+        line = m.group(1) + '=(Scale=' + '(X={},Y={},Z={})'.format(x,y,z) + ',' + m.group(12) + m.group(13)
         return line
     
     def _Read(self, file, mult_coords:tuple|None):
@@ -125,27 +157,33 @@ class Actor:
         line:str = file.readline()
         while line:
             stripped:str = line.strip()
+            prop = prop_regex.match(stripped)
+            if prop:
+                self.props[prop.group(1)] = line
+            
             if (stripped.startswith('Location=')
                 or stripped.startswith('BasePos=')
                 or stripped.startswith('SavedPos=')
                 or stripped.startswith('OldLocation=')
-                or stripped.startswith('PrePivot=')
+                or (stripped.startswith('PrePivot=') and not self.IsMover())
                 or stripped.startswith('BasePos=')):
                 # parse and multiply
                 line = self.ProcLoc(line, mult_coords)
 
-            elif (stripped.startswith('Rotation=')
+            elif not self.IsMover() and (stripped.startswith('Rotation=')
                   or stripped.startswith('BaseRot=')
                   or stripped.startswith('SavedRot=')
                   or stripped.startswith('KeyRot')
                   or stripped.startswith('ViewRotation')):
                 # parse and fix
                 line = self.ProcRot(line, mult_coords)
+            elif stripped.startswith('PostScale') and self.IsMover():
+                line = self.FixMoverPostScale(line, mult_coords)
 
             elif stripped.startswith('Begin Brush '):
                 self.ReadBrush(line, file, mult_coords)
                 line:str = file.readline()
-                continue# don't append again, but we need to read the next line, yuck
+                continue# HACK: don't append again, but we need to read the next line, yuck
             elif stripped.startswith('Begin '):
                 raise NotImplementedError('unknown property: ' + line + ', in actor: ' + self.lines[0])
 
@@ -158,6 +196,8 @@ class Actor:
         raise RuntimeError('unexpected end of actor?')
     
     def ReadBrush(self, line:str, file, mult_coords) -> None:
+        if not self.IsBrush():
+            raise RuntimeError('unexpected Brush in class '+self.classname)
         while line:
             stripped:str = line.strip()
             if stripped.startswith('Begin Polygon '):
@@ -187,7 +227,7 @@ class Actor:
         z *= mult_coords[2]
         z = FormatPolyCoord(z)
 
-        line = match.group(1) + x +',' + y +',' + z + match.group(8)
+        line = match.group(1) + '{},{},{}'.format(x,y,z) + match.group(8)
         return line
     
     def ReadPolygon(self, line:str, file, mult_coords) -> None:
@@ -196,13 +236,16 @@ class Actor:
             #print('ReadPolygon', line)
             stripped:str = line.strip()
 
-            if stripped.startswith('Vertex '):
+            # Movers use PostScale instead of modifying vertices
+            if stripped.startswith('Vertex ') and not self.IsMover():
                 if not start:
                     start = len(self.lines)-1
                 line = self.AdjustVert(line, mult_coords)
 
             self.lines.append(line)
             if stripped == 'End Polygon':
+                if self.IsMover():
+                    return
                 # assert we finished with at least 3 vertices
                 end = len(self.lines)-2
                 #print('\nEnd Polygon', start, end)
