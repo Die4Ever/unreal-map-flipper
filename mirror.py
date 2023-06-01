@@ -6,3 +6,8 @@ m = Map()
 m.SetMirror((-1,1,1))
 m.Read(Path('C:/temp/barlevel.t3d'))
 m.Write(Path('C:/temp/mirroredbar.t3d'))
+
+m = Map()
+m.SetMirror((-1,1,1))
+m.Read(Path('C:/temp/airfield.t3d'))
+m.Write(Path('C:/temp/mirroredairfield.t3d'))

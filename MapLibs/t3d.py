@@ -16,6 +16,7 @@ getclassname = re.compile(r'^Begin Actor Class=([^ ]+) Name=([^ ]+)\s*$')
 classes_rot_offsets = dict(
     Pinball=32768,
     Chair1=32768,
+    Brush=0,
 )
 
 def MirrorList(l):
@@ -47,6 +48,7 @@ class Actor:
         match = getclassname.match(line)
         self.classname = match.group(1)
         self.objectname = match.group(2)
+        self.polylist = None
     
     def Read(self, file, mult_coords:tuple|None):
         try:
@@ -59,6 +61,10 @@ class Actor:
 
     def __str__(self):
         return ''.join(self.lines)
+
+    def Finalize(self):# TODO:
+        if self.classname=='Brush':
+            assert self.polylist
     
     def ProcLoc(self, line:str, mult_coords:tuple|None) -> str:
         if not mult_coords:
@@ -107,6 +113,7 @@ class Actor:
         return line
     
     def _Read(self, file, mult_coords:tuple|None):
+        # TODO: save rotation, location, prepivot, and polylist?
         line:str = file.readline()
         while line:
             stripped:str = line.strip()
@@ -136,6 +143,7 @@ class Actor:
 
             self.lines.append(line)
             if stripped == 'End Actor':
+                self.Finalize()
                 return
             line:str = file.readline()
         
@@ -157,6 +165,8 @@ class Actor:
 
     def AdjustVert(self, line:str, mult_coords) -> str:
         # TODO: convert coords to world space, perform mirror, then convert back to object space for saving
+        if not mult_coords:
+            return line
         match = poly.match(line)
         x = float(match.group(2))
         y = float(match.group(4))
@@ -178,22 +188,23 @@ class Actor:
             #print('ReadPolygon', line)
             stripped:str = line.strip()
 
-            if stripped.startswith('Vertex ') and mult_coords:
+            if stripped.startswith('Vertex '):
                 if not start:
                     start = len(self.lines)-1
                 line = self.AdjustVert(line, mult_coords)
 
             self.lines.append(line)
             if stripped == 'End Polygon':
+                # assert we finished with at least 3 vertices
+                end = len(self.lines)-2
+                #print('\nEnd Polygon', start, end)
+                #print(self.lines[start:end])
+                assert self.lines[end].strip().startswith('Vertex ')
+                assert end-start >= 2
                 if mult_coords:
-                    # assert we finished with at least 3 vertices, and mirror the list
-                    end = len(self.lines)-2
-                    #print('\nEnd Polygon', start, end)
-                    #print(self.lines[start:end])
-                    assert self.lines[end].strip().startswith('Vertex ')
-                    assert end-start >= 2
                     self.lines[start:end] = MirrorList(self.lines[start:end])
                     #print(self.lines[start:end])
+                self.polylist = [*range(start, end)]
                 return
 
             line:str = file.readline()
