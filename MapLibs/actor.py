@@ -191,26 +191,6 @@ class Actor:
         return line
     
 
-    def FixMoverPostScale(self, line:str, mult_coords) -> str:
-        if not mult_coords:
-            return line
-        m = scale_regex.match(line)
-        x = m.group(4)
-        if not x:
-            x=1
-        y = m.group(7)
-        if not y:
-            y=1
-        z = m.group(10)
-        if not z:
-            z=1
-        x = float(x) * mult_coords[0]
-        y = float(y) * mult_coords[1]
-        z = float(z) * mult_coords[2]
-        line = m.group(1) + '=(Scale=' + '(X={},Y={},Z={})'.format(x,y,z) + ',' + m.group(12) + m.group(13)
-        return line
-    
-
     def _Read(self, file, mult_coords:tuple|None):
         # TODO: save rotation, location, prepivot, and polylist?
         line:str = file.readline()
@@ -326,6 +306,7 @@ class Brush(Actor):
         self.lines[TextureU] = match_u.group(1) + '{},{},{}'.format(ux,uy,uz) + match_u.group(8)
         self.lines[TextureV] = match_v.group(1) + '{},{},{}'.format(vx,vy,vz) + match_v.group(8)
     
+
     def EndPolygon(self, props:dict, first_vert:int, last_vert:int, mult_coords):
         Normal = props['Normal']
         Pan = props.get('Pan')
@@ -390,11 +371,31 @@ class Mover(Brush):
             self.lines.insert(-1, line)
             raise NotImplementedError('TODO: missing PostScale in Finalize')
         else:
-            self.lines[i] = self.FixMoverPostScale(self.lines[i], mult_coords)
+            self.lines[i] = self.FixPostScale(self.lines[i], mult_coords)
         
     
     def EndPolygon(self, props:dict, first_vert:int, last_vert:int, mult_coords):
         pass # Movers use PostScale instead of modifying vertices
+
+
+    def FixPostScale(self, line:str, mult_coords) -> str:
+        if not mult_coords:
+            return line
+        m = scale_regex.match(line)
+        x = m.group(4)
+        if not x:
+            x=1
+        y = m.group(7)
+        if not y:
+            y=1
+        z = m.group(10)
+        if not z:
+            z=1
+        x = float(x) * mult_coords[0]
+        y = float(y) * mult_coords[1]
+        z = float(z) * mult_coords[2]
+        line = m.group(1) + '=(Scale=' + '(X={},Y={},Z={})'.format(x,y,z) + ',' + m.group(12) + m.group(13)
+        return line
 
 
 def CreateActor(line:str) -> Actor:
