@@ -44,8 +44,8 @@ def MirrorList(l):
 
 def mirror_rotation(r, offset):
     yaw = int(r[1])
-    yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
     yaw += offset # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
+    yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
     yaw = -yaw
     yaw -= offset # undo the offset
     yaw %= 65535
@@ -180,13 +180,21 @@ class Actor:
         if not roll:
             roll = 0
 
-        # TODO: this is only correct when mirroring X
+        # TODO: this is only correct when mirroring X or Y
         # temporary variable to get classes_rot_offsets, all Brushes are the same
         classname = self.classname
         if self.IsBrush():
             classname = 'Brush'
         rot_offset = classes_rot_offsets.get(classname, 16384)
-        (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
+
+        # if flip X
+        if mult_coords[0] < 0 and mult_coords[1] > 0:
+            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
+        # elif flip Y
+        elif mult_coords[1] < 0 and mult_coords[0] > 0:
+            rot_offset += 16384
+            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
+
         line = match.group(1) + '=(Pitch={},Yaw={},Roll={})'.format(pitch,yaw,roll) + match.group(8)
         return line
     
@@ -261,16 +269,11 @@ class Brush(Actor):
         return line
     
     def AdjustTextCoord(self, Normal:int, Pan:int|None, TextureU:int, TextureV:int, mult_coords) -> None:
-        if not mult_coords:# TODO: make this work with mult_coords other than (-1,1,1)
+        if not mult_coords:
             return
 
-        match_n = poly.match(self.lines[Normal])
         match_u = poly.match(self.lines[TextureU])
         match_v = poly.match(self.lines[TextureV])
-
-        nx = float(match_n.group(2))
-        ny = float(match_n.group(4))
-        nz = float(match_n.group(6))
 
         ux = float(match_u.group(2))
         uy = float(match_u.group(4))
@@ -280,20 +283,15 @@ class Brush(Actor):
         vy = float(match_v.group(4))
         vz = float(match_v.group(6))
 
-        # if the Normal has a Y component, that means the X flip has affected it
-        if abs(ny) >= 0.01:
-            # U is the X position in the texture file, V is the Y position in the texture file
-            # so to get the X position in the texture you multiply the location vector by the U vector
-            ux *= -1
-            vx *= -1
-            if Pan is not None:
-                # Pan      U=-59 V=0
-                match_p = pan_regex.match(self.lines[Pan])
-                panu = int(match_p.group(2))
-                panv = int(match_p.group(3))
-                
-                line = '{}U={} V={}{}'.format(match_p.group(1), panu, panv, match_p.group(4))
-                self.lines[Pan] = line
+        # U is the X position in the texture file, V is the Y position in the texture file
+        # so to get the X position in the texture you multiply the location vector by the U vector
+        ux /= mult_coords[0]
+        uy /= mult_coords[1]
+        uz /= mult_coords[2]
+
+        vx /= mult_coords[0]
+        vy /= mult_coords[1]
+        vz /= mult_coords[2]
 
         ux = FormatPolyCoord(ux)
         uy = FormatPolyCoord(uy)
@@ -321,11 +319,13 @@ class Brush(Actor):
         for i in range(first_vert, last_vert+1):
             self.lines[i] = self.AdjustVert(self.lines[i], mult_coords)
 
-        if mult_coords:
+        # only invert if odd number of flips
+        num_flips:int = int(mult_coords[0]<0) + int(mult_coords[1]<0) + int(mult_coords[2]<0)
+        if num_flips % 2 == 1:
             polys = self.lines[first_vert:last_vert]
             polys.reverse()
-            self.lines[first_vert:last_vert] = polys# MirrorList(self.lines[start:end])
-            #print(self.lines[start:end])
+            self.lines[first_vert:last_vert] = polys
+            #print(polys)
 
 
     def ReadPolygon(self, line:str, file, mult_coords) -> None:
@@ -371,14 +371,14 @@ class Mover(Brush):
             self.lines.insert(-1, line)
             raise NotImplementedError('TODO: missing PostScale in Finalize')
         else:
-            self.lines[i] = self.FixPostScale(self.lines[i], mult_coords)
+            self.lines[i] = self.FixScale(self.lines[i], mult_coords)
         
     
     def EndPolygon(self, props:dict, first_vert:int, last_vert:int, mult_coords):
         pass # Movers use PostScale instead of modifying vertices
 
 
-    def FixPostScale(self, line:str, mult_coords) -> str:
+    def FixScale(self, line:str, mult_coords) -> str:
         if not mult_coords:
             return line
         m = scale_regex.match(line)

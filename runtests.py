@@ -223,14 +223,44 @@ class T3DTestCase(unittest.TestCase):
 
         self.assertEqual(len(map.actors), 2)
 
-    def test_map_file(self):
+    def test_map_file_mirror_x(self):
         m = Map()
         out = GetDefaultOut()
         root = out.parent
         f = root / 'tests' / 'RotationTest.t3d'
         m.SetMirror((-1,1,1))
         m.Read(f)
-        f = out / 'test_mirror.t3d'
+        f = out / 't_mirror_x.t3d'
+        m.Write(f)
+
+    def test_map_file_mirror_y(self):
+        m = Map()
+        out = GetDefaultOut()
+        root = out.parent
+        f = root / 'tests' / 'RotationTest.t3d'
+        m.SetMirror((1,-1,1))
+        m.Read(f)
+        f = out / 't_mirror_y.t3d'
+        m.Write(f)
+    
+    def test_map_file_bigger(self):
+        m = Map()
+        out = GetDefaultOut()
+        root = out.parent
+        f = root / 'tests' / 'RotationTest.t3d'
+        m.SetMirror((1.5,1.5,1.5))
+        m.Read(f)
+        f = out / 't_bigger.t3d'
+        m.Write(f)
+    
+    def test_map_file_smaller(self):
+        m = Map()
+        out = GetDefaultOut()
+        root = out.parent
+        f = root / 'tests' / 'RotationTest.t3d'
+        m.SetMirror((0.7,0.7,0.7))
+        m.Read(f)
+        f = out / 't_smaller.t3d'
         m.Write(f)
 
 
