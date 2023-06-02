@@ -320,7 +320,9 @@ class Brush(Actor):
             self.lines[i] = self.AdjustVert(self.lines[i], mult_coords)
 
         # only invert if odd number of flips
-        num_flips:int = int(mult_coords[0]<0) + int(mult_coords[1]<0) + int(mult_coords[2]<0)
+        num_flips:int = 0
+        if mult_coords:
+            num_flips = int(mult_coords[0]<0) + int(mult_coords[1]<0) + int(mult_coords[2]<0)
         if num_flips % 2 == 1:
             polys = self.lines[first_vert:last_vert]
             polys.reverse()
