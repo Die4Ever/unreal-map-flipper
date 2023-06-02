@@ -222,6 +222,18 @@ class T3DTestCase(unittest.TestCase):
 
         self.assertEqual(len(map.actors), 2)
 
+    def test_map_file(self):
+        m = Map()
+        root = Path(__file__).resolve().parent
+        p = root / 'tests' / 'RotationTest.t3d'
+        m.SetMirror((-1,1,1))
+        m.Read(p)
+        p = root / 'out'
+        p.mkdir(exist_ok=True)
+        p = p / 'test_mirror.t3d'
+        m.Write(p)
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=9, warnings="error", failfast=True)

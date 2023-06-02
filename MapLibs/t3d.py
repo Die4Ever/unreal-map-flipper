@@ -2,7 +2,9 @@ from pathlib import Path
 import re
 
 coord = r'((\+|-)\d+\.\d+)'
-poly = re.compile(r'^(\s*Vertex\s+)'+coord+','+coord+','+coord+r'(\s*$)')
+poly = re.compile(r'^(\s*\w+\s+)'+coord+','+coord+','+coord+r'(\s*$)')
+
+pan_regex = re.compile(r'^(\s+Pan\s+)U=([^\s]+)\s+V=([^\s]+)(\s*)$')
 
 coord = r'(-?\d+(\.\d+)?)'
 vect_pattern = r'\((X=' + coord + ')?,?(Y=' + coord + ')?,?(Z=' + coord + ')?\)'
@@ -152,6 +154,8 @@ class Actor:
     
 
     def FixMoverPostScale(self, line:str, mult_coords) -> str:
+        if not mult_coords:
+            return line
         m = scale_regex.match(line)
         x = m.group(4)
         if not x:
@@ -250,9 +254,58 @@ class Actor:
         line = match.group(1) + '{},{},{}'.format(x,y,z) + match.group(8)
         return line
     
+    def AdjustTextCoord(self, Normal:int, Pan:int|None, TextureU:int, TextureV:int, mult_coords) -> None:
+        if not mult_coords:# TODO: make this work with mult_coords other than (-1,1,1)
+            return
+
+        match_n = poly.match(self.lines[Normal])
+        match_u = poly.match(self.lines[TextureU])
+        match_v = poly.match(self.lines[TextureV])
+
+        nx = float(match_n.group(2))
+        ny = float(match_n.group(4))
+        nz = float(match_n.group(6))
+
+        ux = float(match_u.group(2))
+        uy = float(match_u.group(4))
+        uz = float(match_u.group(6))
+
+        vx = float(match_v.group(2))
+        vy = float(match_v.group(4))
+        vz = float(match_v.group(6))
+
+        # if the Normal has a Y component, that means the X flip has affected it
+        if abs(ny) >= 0.01:
+            # U is the X position in the texture file, V is the Y position in the texture file
+            # so to get the X position in the texture you multiply the location vector by the U vector
+            ux *= -1
+            vx *= -1
+            if Pan is not None:
+                # Pan      U=-59 V=0
+                match_p = pan_regex.match(self.lines[Pan])
+                panu = -int(match_p.group(2))
+                panv = int(match_p.group(3))
+                line = '{}U={} V={}{}'.format(match_p.group(1), panu, panv, match_p.group(4))
+                self.lines[Pan] = line
+
+        ux = FormatPolyCoord(ux)
+        uy = FormatPolyCoord(uy)
+        uz = FormatPolyCoord(uz)
+
+        vx = FormatPolyCoord(vx)
+        vy = FormatPolyCoord(vy)
+        vz = FormatPolyCoord(vz)
+
+        self.lines[TextureU] = match_u.group(1) + '{},{},{}'.format(ux,uy,uz) + match_u.group(8)
+        self.lines[TextureV] = match_v.group(1) + '{},{},{}'.format(vx,vy,vz) + match_v.group(8)
+    
 
     def ReadPolygon(self, line:str, file, mult_coords) -> None:
         start = None
+        TextureU = None
+        TextureV = None
+        Normal = None
+        Pan = None
         while line:
             #print('ReadPolygon', line)
             stripped:str = line.strip()
@@ -260,13 +313,25 @@ class Actor:
             # Movers use PostScale instead of modifying vertices
             if stripped.startswith('Vertex ') and not self.IsMover():
                 if not start:
-                    start = len(self.lines)-1
+                    start = len(self.lines)
+                line = self.AdjustVert(line, mult_coords)
+            
+            elif stripped.startswith('TextureU'):
+                TextureU = len(self.lines)
+            elif stripped.startswith('TextureV'):
+                TextureV = len(self.lines)
+            elif stripped.startswith('Normal'):
+                Normal = len(self.lines)
+            elif stripped.startswith('Pan'):
+                Pan = len(self.lines)
+            elif stripped.startswith('Origin') and not self.IsMover():
                 line = self.AdjustVert(line, mult_coords)
 
             self.lines.append(line)
             if stripped == 'End Polygon':
                 if self.IsMover():
                     return
+                self.AdjustTextCoord(Normal, Pan, TextureU, TextureV, mult_coords)
                 # assert we finished with at least 3 vertices
                 end = len(self.lines)-2
                 #print('\nEnd Polygon', start, end)
@@ -274,7 +339,9 @@ class Actor:
                 assert self.lines[end].strip().startswith('Vertex ')
                 assert end-start >= 2
                 if mult_coords:
-                    self.lines[start:end] = MirrorList(self.lines[start:end])
+                    polys = self.lines[start:end]
+                    polys.reverse()
+                    self.lines[start:end] = polys# MirrorList(self.lines[start:end])
                     #print(self.lines[start:end])
                 self.polylist = [*range(start, end)]
                 return
