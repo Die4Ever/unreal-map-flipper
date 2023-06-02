@@ -225,14 +225,13 @@ class T3DTestCase(unittest.TestCase):
 
     def test_map_file(self):
         m = Map()
-        root = Path(__file__).resolve().parent
-        p = root / 'tests' / 'RotationTest.t3d'
+        out = GetDefaultOut()
+        root = out.parent
+        f = root / 'tests' / 'RotationTest.t3d'
         m.SetMirror((-1,1,1))
-        m.Read(p)
-        p = root / 'out'
-        p.mkdir(exist_ok=True)
-        p = p / 'test_mirror.t3d'
-        m.Write(p)
+        m.Read(f)
+        f = out / 'test_mirror.t3d'
+        m.Write(f)
 
 
 

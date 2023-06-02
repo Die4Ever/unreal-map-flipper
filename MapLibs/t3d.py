@@ -1,6 +1,15 @@
 from pathlib import Path
 from MapLibs.actor import CreateActor
 
+def GetDefaultOut() -> Path:
+    root = Path(__file__).resolve().parent.parent
+    assert root.is_dir()
+    assert (root / 'mirror.py').exists()
+    p = root / 'out'
+    p.mkdir(exist_ok=True)
+    return p
+
+
 class Map:
     def __init__(self):
         self.actors = []
