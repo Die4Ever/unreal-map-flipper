@@ -9,6 +9,7 @@ if typechecks:
     install_import_hook('MapLibs')
 
 from MapLibs.t3d import *
+from MapLibs.actor import *
 
 class MockFile:
     def __init__(self, content:str):
@@ -159,11 +160,11 @@ class T3DTestCase(unittest.TestCase):
     
     def test_read_polygon(self):
         polygonfile.reset()
-        actor = Actor('Begin Actor Class=Test Name=Test1')
-        self.assertEqual(actor.classname, 'Test')
+        actor:Brush = CreateActor('Begin Actor Class=Brush Name=Test1')
+        self.assertEqual(actor.classname, 'Brush')
         actor.ReadPolygon(polygonfile.readline(), polygonfile, None)
 
-        self.assertEqual(actor.lines[0], 'Begin Actor Class=Test Name=Test1')
+        self.assertEqual(actor.lines[0], 'Begin Actor Class=Brush Name=Test1')
         self.assertEqual(actor.lines[1], '    Begin Polygon Item=OUTSIDE Texture=ClenMedmWalnt_A Flags=32 Link=1')
         self.assertEqual(actor.lines[-1], '          End Polygon')
         self.assertEqual(polygonfile.readline(), 'End Test')
@@ -171,7 +172,7 @@ class T3DTestCase(unittest.TestCase):
     def test_read_brush(self):
         print('test ReadBrush first')
         brushfile.reset()
-        actor = Actor(brushfile.readline())
+        actor:Brush = CreateActor(brushfile.readline())
         self.assertEqual(actor.classname, 'Brush')
         ret = actor.ReadBrush(brushfile.readline(), brushfile, None)
 
@@ -185,7 +186,7 @@ class T3DTestCase(unittest.TestCase):
 
         print('now test Actor::Read')
         brushfile.reset()
-        actor = Actor(brushfile.readline())
+        actor:Brush = CreateActor(brushfile.readline())
         self.assertEqual(actor.classname, 'Brush')
         actor.Read(brushfile, None)
 
@@ -198,7 +199,7 @@ class T3DTestCase(unittest.TestCase):
     def test_read_actor(self):
         actorfile.reset()
         self.assertEqual(actorfile.readline(), 'Begin Map')
-        actor = Actor(actorfile.readline())
+        actor = CreateActor(actorfile.readline())
         self.assertEqual(actor.classname, 'Jock')
         self.assertFalse(actor.IsBrush())
         self.assertFalse(actor.IsMover())
