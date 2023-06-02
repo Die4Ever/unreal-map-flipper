@@ -24,10 +24,15 @@ scale_regex = re.compile(r'^([^=]+)=\((Scale=' + vect_pattern + r',)?(.*\))(\s*)
 
 
 # some models like the pinball machine are sideways, so the math doesn't match the appearance
+# default is 16384 not 0, at least for ScriptedPawns
 classes_rot_offsets = dict(
     Pinball=32768,
     Chair1=32768,
     Brush=0,
+    CouchLeather=0,
+    WaterCooler=0,
+    Toilet=0,
+    HangingChicken=0, # very important
 )
 
 
