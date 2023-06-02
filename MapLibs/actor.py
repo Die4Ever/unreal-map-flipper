@@ -102,7 +102,7 @@ class Actor:
     def GetPropIdx(self, prop:str) -> int|None:
         return self.props.get(prop)
     
-    def IterProps(self, p) -> list:
+    def IterProps(self, *p) -> list:
         ret = []
         for prop in p:
             if prop in self.props:
@@ -116,7 +116,7 @@ class Actor:
         else:
             assert not self.polylist
 
-        for i in self.IterProps(('Location', 'BasePos', 'SavedPos', 'OldLocation', 'BasePos')):
+        for i in self.IterProps('Location', 'BasePos', 'SavedPos', 'OldLocation'):
             self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
         
         if not self.IsMover() and 'PrePivot' in self.props:
@@ -129,7 +129,7 @@ class Actor:
                 line = '    Rotation=(Pitch=0,Yaw=0,Roll=0)\n' # stick this default in so we can correct it below
                 self.lines.insert(-2, line) # don't overwrite the End Actor
 
-            for i in self.IterProps(('Rotation', 'BaseRot', 'SavedRot', 'ViewRotation')):
+            for i in self.IterProps('Rotation', 'BaseRot', 'SavedRot', 'ViewRotation'):
                 self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
             
             for (prop, i) in self.props.items():
