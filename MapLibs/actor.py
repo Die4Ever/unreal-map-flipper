@@ -370,9 +370,8 @@ class Mover(Brush):
         i = self.GetPropIdx('PostScale')
         if not i:
             line = '    PostScale=(Scale=(X={},Y={},Z={}),SheerAxis=SHEER_ZX)\n'.format(-1,1,1)
-            #self.props['PostScale'] = len(self.lines)-1
+            self.props['PostScale'] = len(self.lines)-1
             self.lines.insert(-1, line)
-            raise NotImplementedError('TODO: missing PostScale in Finalize')
         else:
             self.lines[i] = self.FixScale(self.lines[i], mult_coords)
         

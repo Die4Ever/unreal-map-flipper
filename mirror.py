@@ -9,13 +9,15 @@ parser = argparse.ArgumentParser(description='Unreal Map Flipper/Transformer')
 parser.add_argument('--all', action="store_true", help='Do all the maps')
 args = parser.parse_args()
 
-outdir = GetDefaultOut()
-indir = outdir.parent / 'in'
+# keep the paths short because UnrealEd has a strict limit, I think 80 characters
+outdir = Path('C:\\t\\im\\') # GetDefaultOut()
+outdir.mkdir(exist_ok=True)
+indir = outdir.parent / 'ex'
 indir.mkdir(exist_ok=True)
-assert len(list(indir.glob('*')))==0, 'empty '+indir+' before starting'
-donedir = outdir.parent / 'maps'
+assert len(list(indir.glob('*')))==0, 'empty '+str(indir)+' before starting'
+donedir = outdir.parent / 'dx'
 donedir.mkdir(exist_ok=True)
-assert len(list(donedir.glob('*')))==0, 'empty '+donedir+' before starting'
+assert len(list(donedir.glob('*')))==0, 'empty '+str(donedir)+' before starting'
 mult_coords = (-1,1,1)
 mult_coords_desc = str(mult_coords[0])+'_'+str(mult_coords[1])+'_'+str(mult_coords[2])
 last_map = None
@@ -25,6 +27,7 @@ def ReadExport(export:Path):
     outname = export.stem+'_'+mult_coords_desc
     pyperclip.copy(outname)
     sleep(1) # HACK: make sure the files are fully written
+
     print('reading', export)
     m = Map()
     m.SetMirror(mult_coords)
@@ -32,7 +35,7 @@ def ReadExport(export:Path):
     outpath = outdir / (outname+'.t3d')
     m.Write(outpath)
     print('wrote to', outpath)
-    export.unlink()
+    #export.unlink()
     dxfile = donedir / (outname+'.dx')
     print('waiting for', dxfile)
     while not dxfile.exists():
@@ -44,8 +47,14 @@ def DoAll():
     global last_map
     dx = Path(r'C:\Games\DX\Deus Ex Rando\System')
     mapsdir = dx.parent / 'Maps'
+    resume=False#
+    resumeMap='09_NYC_ShipBelow'
     for map in mapsdir.glob('*.dx'):
         last_map = map.stem
+        if last_map==resumeMap:
+            resume=False
+        if resume:
+            continue
         export = indir / (last_map+'.t3d')
         print('')
         print('')
