@@ -119,6 +119,11 @@ class Actor:
             self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
 
         if not self.IsMover():
+            if not self.GetPropIdx('Rotation'):
+                self.props['Rotation'] = len(self.lines)-2
+                line = '    Rotation=(Pitch=0,Yaw=0,Roll=0)\n' # stick this default in so we can correct it below
+                self.lines.insert(-2, line) # don't overwrite the End Actor
+
             for i in self.IterProps(('Rotation', 'BaseRot', 'SavedRot', 'ViewRotation')):
                 self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
             

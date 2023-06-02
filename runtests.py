@@ -194,7 +194,7 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actor.lines[1], '    Begin Brush Name=Model14')
         self.assertEqual(actor.lines[-1], 'End Actor')
         self.assertEqual(brushfile.readline(), 'End Test')
-        self.assertEqual(len(str(actor)), 824, 'string of actor length')
+        self.assertEqual(len(str(actor)), 860, 'string of actor length')
 
     def test_read_actor(self):
         actorfile.reset()
