@@ -75,6 +75,7 @@ class Actor:
         self.objectname = match.group(2)
         self.polylist = []
         self.props = dict()
+        self.parent = None
     
 
     def Read(self, file, mult_coords:tuple|None):
@@ -111,10 +112,10 @@ class Actor:
 
 
     def Finalize(self, mult_coords):# TODO: more checks in finalize
-        if self.IsBrush():
-            assert self.polylist
-        else:
-            assert not self.polylist
+        #if self.IsBrush():
+        #    assert self.polylist
+        #else:
+        #    assert not self.polylist
 
         for i in self.IterProps('Location', 'BasePos', 'SavedPos', 'OldLocation'):
             self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
@@ -400,11 +401,25 @@ class Mover(Brush):
         return line
 
 
-def CreateActor(line:str) -> Actor:
+class DeusExLevelInfo(Actor):
+    def Finalize(self, mult_coords):
+        super().Finalize(mult_coords)
+        i = self.GetPropIdx('MapName')
+        if i and self.parent:
+            match = prop_regex.match(self.lines[i])
+            self.parent.SetMapName(match.group(3))
+
+
+def CreateActor(parent, line:str) -> Actor:
     match = getclassname.match(line)
     classname = match.group(1)
     if classname in Actor.mover_classes:
-        return Mover(line)
+        a = Mover(line)
     elif classname in Actor.brush_classes:
-        return Brush(line)
-    return Actor(line)
+        a = Brush(line)
+    elif classname == 'DeusExLevelInfo':
+        a = DeusExLevelInfo(line)
+    else:
+        a = Actor(line)
+    a.parent = parent
+    return a

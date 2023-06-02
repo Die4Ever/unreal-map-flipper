@@ -160,7 +160,7 @@ class T3DTestCase(unittest.TestCase):
     
     def test_read_polygon(self):
         polygonfile.reset()
-        actor:Brush = CreateActor('Begin Actor Class=Brush Name=Test1')
+        actor:Brush = CreateActor(None, 'Begin Actor Class=Brush Name=Test1')
         self.assertEqual(actor.classname, 'Brush')
         actor.ReadPolygon(polygonfile.readline(), polygonfile, None)
 
@@ -172,7 +172,7 @@ class T3DTestCase(unittest.TestCase):
     def test_read_brush(self):
         print('test ReadBrush first')
         brushfile.reset()
-        actor:Brush = CreateActor(brushfile.readline())
+        actor:Brush = CreateActor(None, brushfile.readline())
         self.assertEqual(actor.classname, 'Brush')
         ret = actor.ReadBrush(brushfile.readline(), brushfile, None)
 
@@ -186,7 +186,7 @@ class T3DTestCase(unittest.TestCase):
 
         print('now test Actor::Read')
         brushfile.reset()
-        actor:Brush = CreateActor(brushfile.readline())
+        actor:Brush = CreateActor(None, brushfile.readline())
         self.assertEqual(actor.classname, 'Brush')
         actor.Read(brushfile, None)
 
@@ -199,7 +199,7 @@ class T3DTestCase(unittest.TestCase):
     def test_read_actor(self):
         actorfile.reset()
         self.assertEqual(actorfile.readline(), 'Begin Map')
-        actor = CreateActor(actorfile.readline())
+        actor = CreateActor(None, actorfile.readline())
         self.assertEqual(actor.classname, 'Jock')
         self.assertFalse(actor.IsBrush())
         self.assertFalse(actor.IsMover())

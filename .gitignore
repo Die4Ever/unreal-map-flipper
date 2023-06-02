@@ -1,4 +1,6 @@
 out/
+in/
+maps/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
