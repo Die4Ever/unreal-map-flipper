@@ -33,6 +33,8 @@ classes_rot_offsets = dict(
     WaterCooler=0,
     Toilet=0,
     HangingChicken=0, # very important
+    ChairLeather=0,
+    OfficeChair=0,
 )
 
 

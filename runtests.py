@@ -264,6 +264,17 @@ class T3DTestCase(unittest.TestCase):
         m.Write(f)
 
 
+    def test_fix_map(self):
+        return
+        m = Map()
+        mapname = '01_NYC_UNATCOIsland'
+        f = Path('C:/') / 't' / 'ex' / (mapname+'.t3d')
+        m.SetMirror((-1,1,1))
+        m.Read(f)
+        f = Path('C:/') / 't' / 'im' / (mapname+'_-1_1_1.t3d')
+        m.Write(f)
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=9, warnings="error", failfast=True)
