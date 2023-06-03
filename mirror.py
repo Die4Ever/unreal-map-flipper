@@ -14,19 +14,21 @@ outdir = Path('C:\\t\\im\\') # GetDefaultOut()
 outdir.mkdir(exist_ok=True)
 indir = outdir.parent / 'ex'
 indir.mkdir(exist_ok=True)
-assert len(list(indir.glob('*')))==0, 'empty '+str(indir)+' before starting'
 donedir = outdir.parent / 'dx'
 donedir.mkdir(exist_ok=True)
-assert len(list(donedir.glob('*')))==0, 'empty '+str(donedir)+' before starting'
 mult_coords = (-1,1,1)
 mult_coords_desc = str(mult_coords[0])+'_'+str(mult_coords[1])+'_'+str(mult_coords[2])
-last_map = None
+created = set()
 
-
-def ReadExport(export:Path):
+def CreateImport(export:Path, do_sleep=False):
+    global created
     outname = export.stem+'_'+mult_coords_desc
+    if outname in created:
+        return outname
+    created.add(outname)
     pyperclip.copy(outname)
-    sleep(1) # HACK: make sure the files are fully written
+    if do_sleep:
+        sleep(1) # HACK: make sure the files are fully written
 
     print('reading', export)
     m = Map()
@@ -35,6 +37,11 @@ def ReadExport(export:Path):
     outpath = outdir / (outname+'.t3d')
     m.Write(outpath)
     print('wrote to', outpath)
+    return outname
+
+
+def ReadExport(export:Path):
+    outname = CreateImport(export, do_sleep=True)
     #export.unlink()
     dxfile = donedir / (outname+'.dx')
     print('waiting for', dxfile)
@@ -44,11 +51,17 @@ def ReadExport(export:Path):
 
 
 def DoAll():
-    global last_map
+    assert len(list(donedir.glob('*')))==0, 'empty '+str(donedir)+' before starting --all'
     dx = Path(r'C:\Games\DX\Deus Ex Rando\System')
     mapsdir = dx.parent / 'Maps'
     resume=False#
     resumeMap='09_NYC_ShipBelow'
+
+    for export in indir.glob('*.t3d'):
+        last_map = export.stem
+        export = indir / (last_map+'.t3d')
+        CreateImport(export)
+    
     for map in mapsdir.glob('*.dx'):
         last_map = map.stem
         if last_map==resumeMap:
