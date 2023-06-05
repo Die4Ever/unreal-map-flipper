@@ -50,6 +50,12 @@ class Map:
         if name:
             self.name = name
     
+    def ToString(self):
+        s = 'Begin Map\n'
+        for a in self.actors:
+            s += str(a)
+        s += 'End Map\n'
+        return s
 
     def Write(self, outpath:Path):
         if outpath.is_dir() and self.name:
@@ -61,9 +67,6 @@ class Map:
             outpath = outpath / name
         
         with open(outpath, 'w', newline='\r\n') as f:
-            f.write('Begin Map\n')
-            for a in self.actors:
-                f.write(str(a))
-            f.write('End Map\n')
+            f.write(self.ToString())
         print('wrote out to', outpath)
 

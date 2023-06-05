@@ -51,7 +51,6 @@ def ReadExport(export:Path):
 
 
 def DoAll():
-    assert len(list(donedir.glob('*')))==0, 'empty '+str(donedir)+' before starting --all'
     dx = Path(r'C:\Games\DX\Deus Ex Rando\System')
     mapsdir = dx.parent / 'Maps'
     resume=False#
@@ -62,6 +61,8 @@ def DoAll():
         export = indir / (last_map+'.t3d')
         CreateImport(export)
     
+    # redoing the processing on existing t3d files doesn't care about this, more convenient to die here
+    assert len(list(donedir.glob('*')))==0, 'empty '+str(donedir)+' before starting --all'
     for map in mapsdir.glob('*.dx'):
         last_map = map.stem
         if last_map==resumeMap:

@@ -1,6 +1,7 @@
 import unittest
 from unittest import case
 import inspect
+import numpy
 from typeguard import typechecked, install_import_hook
 from pathlib import Path
 
@@ -112,6 +113,88 @@ Begin Actor Class=AmbientSound Name=AmbientSound0
 End Actor
 End Map""")
 
+unatcopit = MockFile(
+"""Begin Map
+Begin Actor Class=Brush Name=Brush359
+    CsgOper=CSG_Subtract
+    MainScale=(SheerAxis=SHEER_ZX)
+    PostScale=(Scale=(X=0.625000,Y=1.454545,Z=2.100000),SheerAxis=SHEER_ZX)
+    DistanceFromPlayer=907.171448
+    Level=LevelInfo'MyLevel.LevelInfo0'
+    Tag=Brush
+    Region=(Zone=LevelInfo'MyLevel.LevelInfo0',iLeaf=-1)
+    Location=(X=-272.000000,Y=576.000000,Z=240.000000)
+    Rotation=(Pitch=16384,Yaw=16384)
+    Begin Brush Name=Model354
+       Begin PolyList
+          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=0
+             Origin   -00194.285721,-00128.000000,+00088.000023
+             Normal   +00000.000000,+00000.000000,+00001.000000
+             TextureU +00000.000000,+00001.250000,+00000.000000
+             TextureV -00004.200000,+00000.000000,+00000.000000
+             Vertex   -00080.000000,-00128.000000,+00088.000000
+             Vertex   +00080.000000,-00128.000000,+00088.000000
+             Vertex   +00080.000000,+00128.000000,+00088.000000
+             Vertex   -00080.000000,+00128.000000,+00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=1
+             Origin   -00194.285721,+00128.000000,-00088.000023
+             Normal   +00000.000000,+00000.000000,-00001.000000
+             TextureU +00000.000000,-00001.249999,+00000.000000
+             TextureV -00004.200000,+00000.000000,+00000.000000
+             Vertex   -00080.000000,+00128.000000,-00088.000000
+             Vertex   +00080.000000,+00128.000000,-00088.000000
+             Vertex   +00080.000000,-00128.000000,-00088.000000
+             Vertex   -00080.000000,-00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Marker_sky Link=2
+             Origin   -00080.000000,+00128.000000,-00088.000000
+             Normal   +00000.000000,+00001.000000,+00000.000000
+             TextureU +00001.000000,+00000.000000,+00000.000000
+             TextureV +00000.000000,+00000.000000,-00001.000000
+             Vertex   -00080.000000,+00128.000000,-00088.000000
+             Vertex   -00080.000000,+00128.000000,+00088.000000
+             Vertex   +00080.000000,+00128.000000,+00088.000000
+             Vertex   +00080.000000,+00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=3
+             Origin   -00194.285721,-00128.000000,-00088.000023
+             Normal   +00000.000000,-00001.000000,+00000.000000
+             TextureU +00000.000000,+00000.000000,+00002.909090
+             TextureV -00004.200000,+00000.000000,+00000.000000
+             Vertex   +00080.000000,-00128.000000,-00088.000000
+             Vertex   +00080.000000,-00128.000000,+00088.000000
+             Vertex   -00080.000000,-00128.000000,+00088.000000
+             Vertex   -00080.000000,-00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=UN_Wall_Green Flags=8388608 Link=4
+             Origin   +00080.000015,-00307.199921,+00308.000122
+             Normal   +00001.000000,+00000.000000,+00000.000000
+             TextureU +00000.000000,-00000.625000,+00000.000000
+             TextureV +00000.000000,+00000.000000,-00001.454545
+             Vertex   +00080.000000,+00128.000000,-00088.000000
+             Vertex   +00080.000000,+00128.000000,+00088.000000
+             Vertex   +00080.000000,-00128.000000,+00088.000000
+             Vertex   +00080.000000,-00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Marker_sky Link=5
+             Origin   -00080.000000,-00128.000000,-00088.000000
+             Normal   -00001.000000,+00000.000000,+00000.000000
+             TextureU +00000.000000,+00001.000000,+00000.000000
+             TextureV +00000.000000,+00000.000000,-00001.000000
+             Vertex   -00080.000000,-00128.000000,-00088.000000
+             Vertex   -00080.000000,-00128.000000,+00088.000000
+             Vertex   -00080.000000,+00128.000000,+00088.000000
+             Vertex   -00080.000000,+00128.000000,-00088.000000
+          End Polygon
+       End PolyList
+    End Brush
+    Brush=Model'MyLevel.Model354'
+    PrePivot=(X=-80.000000,Y=128.000000,Z=-88.000023)
+    Name=Brush359
+End Actor
+End Map""")
+
 @typechecked
 class T3DTestCase(unittest.TestCase):
     def test_mirror(self):
@@ -135,8 +218,31 @@ class T3DTestCase(unittest.TestCase):
         self.assertTrue( abs(r[0]-r2[0]) <3, 'assertRotatorsAlmostEqual pitch ' +str(r[0])+' vs '+str(r2[0]) )
         self.assertTrue( abs(r[1]-r2[1]) <3, 'assertRotatorsAlmostEqual yaw ' +str(r[1])+' vs '+str(r2[1]) )
         self.assertTrue( abs(r[2]-r2[2]) <3, 'assertRotatorsAlmostEqual roll ' +str(r[2])+' vs '+str(r2[2]) )
+    
+    def test_rotation_matrix(self):
+        RADIANS_TO_UU = 65535 / np.pi / 2
 
-    def test_rotators(self):        
+        self.assertAlmostEqual(65535 / RADIANS_TO_UU, 6.28319, 5, 'RADIANS_TO_UU')
+        self.assertNotAlmostEqual(65536 / RADIANS_TO_UU, 6.28319, 5, 'RADIANS_TO_UU')
+        
+        iden_rot_mat = np.array([[1, 0, 0],
+                            [0, 1, 0],
+                            [0, 0, 1]])
+        rot = rotation_matrix(0,0,0)
+        numpy.testing.assert_array_almost_equal(rot, iden_rot_mat, 4, 'identity rot matrix')
+        rot = rotation_matrix(65535,65535,65535)
+        numpy.testing.assert_array_almost_equal(rot, iden_rot_mat, 4, 'identity rot matrix')
+        rot = rotation_matrix(-65535,-65535,-65535)
+        numpy.testing.assert_array_almost_equal(rot, iden_rot_mat, 4, 'identity rot matrix')
+
+        # tmult_coords = rotate_mult_coords((16384,16384,0), (-1,1,1))
+        # numpy.testing.assert_array_almost_equal(tmult_coords, (1,1,-1), 4, 'rotated mult coords')
+        # tmult_coords = rotate_mult_coords((0,0,0), (-1,1,1))
+        # numpy.testing.assert_array_almost_equal(tmult_coords, (-1,1,1), 4, 'rotated mult coords')
+        # tmult_coords = rotate_mult_coords((0,16384,0), (-1,1,1))
+        # numpy.testing.assert_array_almost_equal(tmult_coords, (1,-1,1), 4, 'rotated mult coords')
+
+    def test_rotators(self):
         # people talking in bar
         print('try to fix the people in the bar')
         man_yaw = -43264 # 22271 in positive terms, but this is what the map file says
@@ -262,6 +368,14 @@ class T3DTestCase(unittest.TestCase):
         m.Read(f)
         f = out / 't_smaller.t3d'
         m.Write(f)
+
+    def test_unatco_pit(self):
+        unatcopit.reset()
+        unatcopit.sep = '\r\n'# test with newlines
+        map = Map()
+        map.SetMirror((-1,1,1))
+        map._Read(unatcopit)
+        print(map.ToString())
 
 
     def test_fix_map(self):

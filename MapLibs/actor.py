@@ -1,5 +1,6 @@
 from MapLibs.t3d import *
 import re
+import numpy as np
 
 coord = r'((\+|-)\d+\.\d+)'
 poly = re.compile(r'^(\s*\w+\s+)'+coord+','+coord+','+coord+r'(\s*$)')
@@ -36,6 +37,41 @@ classes_rot_offsets = dict(
     ChairLeather=0,
     OfficeChair=0,
 )
+
+def rotation_matrix(x, y, z):
+    RADIANS_TO_UU = 65535 / np.pi / 2
+    x = float(x) / RADIANS_TO_UU
+    y = float(y) / RADIANS_TO_UU
+    z = float(z) / RADIANS_TO_UU
+
+    c1 = np.cos(x)
+    s1 = np.sin(x)
+    c2 = np.cos(y)
+    s2 = np.sin(y)
+    c3 = np.cos(z)
+    s3 = np.sin(z)
+
+    matrix=np.array([[c2*c3, -c2*s3, s2],
+                        [c1*s3+c3*s1*s2, c1*c3-s1*s2*s3, -c2*s1],
+                        [s1*s3-c1*c3*s2, c3*s1+c1*s2*s3, c1*c2]])
+
+    return matrix
+
+def rotate_mult_coords(coords, rot, mult_coords):
+    if mult_coords is None:
+        return None
+    
+    a = rot[0]
+    b = rot[1]
+    c = rot[2]
+    rot_mat = rotation_matrix(-a, -c, -b)
+    coords = np.dot(rot_mat, coords)
+
+    coords *= mult_coords
+
+    rot_mat = rotation_matrix(a, c, b)
+    coords = np.dot(rot_mat, coords)
+    return coords
 
 
 # keep list of vertices counter-clockwise
@@ -78,6 +114,8 @@ class Actor:
         self.polylist = []
         self.props = dict()
         self.parent = None
+        self.rot = (0,0,0)
+        self.PrePivot = (0,0,0)
     
 
     def Read(self, file, mult_coords:tuple|None):
@@ -119,6 +157,10 @@ class Actor:
         #else:
         #    assert not self.polylist
 
+        i = self.GetPropIdx('Rotation')
+        if i:
+            self.rot = self.GetRot(self.lines[i])[0:3]
+
         for i in self.IterProps('Location', 'BasePos', 'SavedPos', 'OldLocation'):
             self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
         
@@ -142,24 +184,34 @@ class Actor:
         #
 
 
-    def ProcLoc(self, line:str, mult_coords:tuple|None) -> str:
-        if not mult_coords:
-            return line
+    def GetLoc(self, line:str) -> tuple:
         match = loc.match(line)
 
         x = match.group(3)
         if not x:
             x = 0
-        x = float(x) * mult_coords[0]
+        x = float(x)
 
         y = match.group(6)
         if not y:
             y = 0
-        y = float(y) * mult_coords[1]
+        y = float(y)
 
         z = match.group(9)
         if not z:
             z = 0
+        z = float(z)
+
+        return (x,y,z,match)
+
+
+    def ProcLoc(self, line:str, mult_coords) -> str:
+        if mult_coords is None:
+            return line
+        
+        (x,y,z,match) = self.GetLoc(line)
+        x = float(x) * mult_coords[0]
+        y = float(y) * mult_coords[1]
         z = float(z) * mult_coords[2]
 
         line = match.group(1) + '=(X={},Y={},Z={})'.format(x,y,z) + match.group(11)
@@ -169,6 +221,7 @@ class Actor:
     def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
         if not mult_coords:
             return line
+    def GetRot(self, line:str) -> tuple:
         match = rot.match(line)
 
         pitch = match.group(3)
@@ -182,6 +235,15 @@ class Actor:
         roll = match.group(7)
         if not roll:
             roll = 0
+        
+        return (int(pitch), int(yaw), int(roll), match)
+    
+
+    def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
+        if not mult_coords:
+            return line
+        
+        (pitch, yaw, roll, match) = self.GetRot(line)
 
         # TODO: this is only correct when mirroring X or Y
         # temporary variable to get classes_rot_offsets, all Brushes are the same
