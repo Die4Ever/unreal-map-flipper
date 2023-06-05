@@ -235,12 +235,14 @@ class T3DTestCase(unittest.TestCase):
         rot = rotation_matrix(-65535,-65535,-65535)
         numpy.testing.assert_array_almost_equal(rot, iden_rot_mat, 4, 'identity rot matrix')
 
-        # tmult_coords = rotate_mult_coords((16384,16384,0), (-1,1,1))
-        # numpy.testing.assert_array_almost_equal(tmult_coords, (1,1,-1), 4, 'rotated mult coords')
-        # tmult_coords = rotate_mult_coords((0,0,0), (-1,1,1))
-        # numpy.testing.assert_array_almost_equal(tmult_coords, (-1,1,1), 4, 'rotated mult coords')
-        # tmult_coords = rotate_mult_coords((0,16384,0), (-1,1,1))
-        # numpy.testing.assert_array_almost_equal(tmult_coords, (1,-1,1), 4, 'rotated mult coords')
+        coords = rotate_mult_coords((1,0,0), (0,0,0), (1,1,1))
+        numpy.testing.assert_array_almost_equal(coords, (1,0,0), 4, 'rotated mult coords')
+        coords = rotate_mult_coords((1,0,0), (12454,42643,6953), (1,1,1))
+        numpy.testing.assert_array_almost_equal(coords, (1,0,0), 2, 'rotated mult coords')
+        coords = rotate_mult_coords((1,2,3), (0,0,0), (-1,1,1))
+        numpy.testing.assert_array_almost_equal(coords, (-1,2,3), 4, 'rotated mult coords')
+        coords = rotate_mult_coords((1,2,3), (0,16384,0), (-1,1,1))
+        numpy.testing.assert_array_almost_equal(coords, (1,-2,3), 4, 'rotated mult coords')
 
     def test_rotators(self):
         # people talking in bar

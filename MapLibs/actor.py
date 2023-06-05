@@ -64,12 +64,12 @@ def rotate_mult_coords(coords, rot, mult_coords):
     a = rot[0]
     b = rot[1]
     c = rot[2]
-    rot_mat = rotation_matrix(-a, -c, -b)
+    rot_mat = rotation_matrix(a, c, b)
     coords = np.dot(rot_mat, coords)
 
     coords *= mult_coords
 
-    rot_mat = rotation_matrix(a, c, b)
+    rot_mat = rotation_matrix(-a, -c, -b)
     coords = np.dot(rot_mat, coords)
     return coords
 
