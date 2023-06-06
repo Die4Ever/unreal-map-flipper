@@ -235,13 +235,17 @@ class T3DTestCase(unittest.TestCase):
         rot = rotation_matrix(-65535,-65535,-65535)
         numpy.testing.assert_array_almost_equal(rot, iden_rot_mat, 4, 'identity rot matrix')
 
-        coords = rotate_mult_coords((1,0,0), (0,0,0), (1,1,1))
+        rot = (0,0,0)
+        coords = rotate_mult_coords((1,0,0), rot, rot, (1,1,1))
         numpy.testing.assert_array_almost_equal(coords, (1,0,0), 4, 'rotated mult coords')
-        coords = rotate_mult_coords((1,0,0), (12454,42643,6953), (1,1,1))
+        rot = (12454,42643,6953)
+        coords = rotate_mult_coords((1,0,0), rot, rot, (1,1,1))
         numpy.testing.assert_array_almost_equal(coords, (1,0,0), 2, 'rotated mult coords')
-        coords = rotate_mult_coords((1,2,3), (0,0,0), (-1,1,1))
+        rot = (0,0,0)
+        coords = rotate_mult_coords((1,2,3), rot, rot, (-1,1,1))
         numpy.testing.assert_array_almost_equal(coords, (-1,2,3), 4, 'rotated mult coords')
-        coords = rotate_mult_coords((1,2,3), (0,16384,0), (-1,1,1))
+        rot = (0,16384,0)
+        coords = rotate_mult_coords((1,2,3), rot, rot, (-1,1,1))
         numpy.testing.assert_array_almost_equal(coords, (1,-2,3), 4, 'rotated mult coords')
 
     def test_rotators(self):
@@ -289,8 +293,8 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actor.lines[-1], '       End PolyList')
         self.assertEqual(ret, '    End Brush')
         self.assertEqual(brushfile.readline(), '    Brush=Model\'MyLevel.Model14\'')
-        self.assertTrue(actor.IsBrush())
-        self.assertFalse(actor.IsMover())
+        self.assertTrue(isinstance(actor, Brush))
+        self.assertFalse(isinstance(actor, Mover))
 
         print('now test Actor::Read')
         brushfile.reset()
@@ -302,15 +306,20 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actor.lines[1], '    Begin Brush Name=Model14')
         self.assertEqual(actor.lines[-1], 'End Actor')
         self.assertEqual(brushfile.readline(), 'End Test')
-        self.assertEqual(len(str(actor)), 860, 'string of actor length')
+        try:
+            self.assertEqual(len(str(actor)), 880, 'string of actor length')
+        except Exception as e:
+            print('ERROR!')
+            print(str(actor))
+            print(e)
+            raise
 
     def test_read_actor(self):
         actorfile.reset()
         self.assertEqual(actorfile.readline(), 'Begin Map')
         actor = CreateActor(None, actorfile.readline())
         self.assertEqual(actor.classname, 'Jock')
-        self.assertFalse(actor.IsBrush())
-        self.assertFalse(actor.IsMover())
+        self.assertFalse(isinstance(actor, Brush))
         actor.Read(actorfile, None)
 
         self.assertEqual(actorfile.readline(), 'Begin Actor Class=AmbientSound Name=AmbientSound0')
@@ -378,17 +387,6 @@ class T3DTestCase(unittest.TestCase):
         map.SetMirror((-1,1,1))
         map._Read(unatcopit)
         print(map.ToString())
-
-
-    def test_fix_map(self):
-        return
-        m = Map()
-        mapname = '01_NYC_UNATCOIsland'
-        f = Path('C:/') / 't' / 'ex' / (mapname+'.t3d')
-        m.SetMirror((-1,1,1))
-        m.Read(f)
-        f = Path('C:/') / 't' / 'im' / (mapname+'_-1_1_1.t3d')
-        m.Write(f)
 
 
 

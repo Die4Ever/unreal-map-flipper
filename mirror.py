@@ -26,8 +26,8 @@ def CreateImport(export:Path, do_sleep=False):
     if outname in created:
         return outname
     created.add(outname)
-    pyperclip.copy(outname)
     if do_sleep:
+        pyperclip.copy(outname)
         sleep(1) # HACK: make sure the files are fully written
 
     print('reading', export)

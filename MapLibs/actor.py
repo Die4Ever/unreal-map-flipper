@@ -27,8 +27,11 @@ scale_regex = re.compile(r'^([^=]+)=\((Scale=' + vect_pattern + r',)?(.*\))(\s*)
 # some models like the pinball machine are sideways, so the math doesn't match the appearance
 # default is 16384 not 0, at least for ScriptedPawns
 classes_rot_offsets = dict(
+    Teleporter=0, # TODO: check these 2...
+    PlayerStart=0,
     Pinball=32768,
     Chair1=32768,
+    ComputerPersonal=32768,
     Brush=0,
     CouchLeather=0,
     WaterCooler=0,
@@ -57,7 +60,7 @@ def rotation_matrix(x, y, z):
 
     return matrix
 
-def rotate_mult_coords(coords, rot, mult_coords):
+def rotate_mult_coords(coords, rot, newrot, mult_coords):
     if mult_coords is None:
         return None
     
@@ -69,6 +72,9 @@ def rotate_mult_coords(coords, rot, mult_coords):
 
     coords *= mult_coords
 
+    a = newrot[0]
+    b = newrot[1]
+    c = newrot[2]
     rot_mat = rotation_matrix(-a, -c, -b)
     coords = np.dot(rot_mat, coords)
     return coords
@@ -114,8 +120,10 @@ class Actor:
         self.polylist = []
         self.props = dict()
         self.parent = None
-        self.rot = (0,0,0)
-        self.PrePivot = (0,0,0)
+        self.oldRot = (0,0,0)
+        self.newRot = (0,0,0)
+        self.oldPrePivot = (0,0,0)
+        self.newPrePivot = (0,0,0)
     
 
     def Read(self, file, mult_coords:tuple|None):
@@ -131,15 +139,6 @@ class Actor:
     def __str__(self):
         return ''.join(self.lines)
     
-
-    def IsBrush(self) -> bool:
-        return False
-
-
-    def IsMover(self) -> bool:
-        return False
-
-
     def GetPropIdx(self, prop:str) -> int|None:
         return self.props.get(prop)
     
@@ -152,23 +151,11 @@ class Actor:
 
 
     def Finalize(self, mult_coords):# TODO: more checks in finalize
-        #if self.IsBrush():
-        #    assert self.polylist
-        #else:
-        #    assert not self.polylist
-
         i = self.GetPropIdx('Rotation')
         if i:
-            self.rot = self.GetRot(self.lines[i])[0:3]
+            self.oldRot = self.GetRot(self.lines[i])[0:3]
 
-        for i in self.IterProps('Location', 'BasePos', 'SavedPos', 'OldLocation'):
-            self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
-        
-        if not self.IsMover() and 'PrePivot' in self.props:
-            i = self.GetPropIdx('PrePivot')
-            self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
-
-        if not self.IsMover():
+        if not isinstance(self, Brush):
             if not self.GetPropIdx('Rotation'):
                 self.props['Rotation'] = len(self.lines)-2
                 line = '    Rotation=(Pitch=0,Yaw=0,Roll=0)\n' # stick this default in so we can correct it below
@@ -181,7 +168,13 @@ class Actor:
                 if not prop.startswith('KeyRot('):
                     continue
                 self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
-        #
+
+        i = self.GetPropIdx('Rotation')
+        if i:
+            self.newRot = self.GetRot(self.lines[i])[0:3]
+
+        for i in self.IterProps('Location', 'BasePos', 'SavedPos', 'OldLocation'):
+            self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
 
 
     def GetLoc(self, line:str) -> tuple:
@@ -214,13 +207,21 @@ class Actor:
         y = float(y) * mult_coords[1]
         z = float(z) * mult_coords[2]
 
+        line = match.group(1) + '=(X={:f},Y={:f},Z={:f})'.format(x,y,z) + match.group(11)
+        return line
+    
+
+    def ProcLocRot(self, line:str, mult_coords) -> str:
+        if mult_coords is None:
+            return line
+        
+        (x,y,z,match) = self.GetLoc(line)
+        coords = rotate_mult_coords((x,y,z), self.oldRot, self.newRot, mult_coords)
+
         line = match.group(1) + '=(X={},Y={},Z={})'.format(x,y,z) + match.group(11)
         return line
     
 
-    def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
-        if not mult_coords:
-            return line
     def GetRot(self, line:str) -> tuple:
         match = rot.match(line)
 
@@ -240,7 +241,7 @@ class Actor:
     
 
     def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
-        if not mult_coords:
+        if mult_coords is None:
             return line
         
         (pitch, yaw, roll, match) = self.GetRot(line)
@@ -248,7 +249,7 @@ class Actor:
         # TODO: this is only correct when mirroring X or Y
         # temporary variable to get classes_rot_offsets, all Brushes are the same
         classname = self.classname
-        if self.IsBrush():
+        if isinstance(self, Brush):
             classname = 'Brush'
         rot_offset = classes_rot_offsets.get(classname, 16384)
 
@@ -260,7 +261,7 @@ class Actor:
             rot_offset += 16384
             (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
 
-        line = match.group(1) + '=(Pitch={},Yaw={},Roll={})'.format(pitch,yaw,roll) + match.group(8)
+        line = match.group(1) + '=(Pitch={:d},Yaw={:d},Roll={:d})'.format(pitch,yaw,roll) + match.group(8)
         return line
     
 
@@ -293,12 +294,19 @@ class Actor:
         raise RuntimeError('unexpected Brush in class '+self.classname)
 
 
-class Brush(Actor):
-    def IsBrush(self) -> bool:
-        return True
-    
+class OldBrush(Actor): # well this was a big waste of time? lol
     def Finalize(self, mult_coords):# TODO: more checks in finalize
         super().Finalize(mult_coords)
+        i = self.GetPropIdx('PrePivot')
+        if type(self) == OldBrush and i and mult_coords is not None:
+            (x,y,z,match) = self.GetLoc(self.lines[i])
+            self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
+            self.oldPrePivot = (x,y,z)
+            (x,y,z,match) = self.GetLoc(self.lines[i])
+            self.newPrePivot = (x,y,z)
+        
+        for p in self.polylist:
+            self.FinalizePolygon(p, mult_coords)
         
     def ReadBrush(self, line:str, file, mult_coords) -> str:
         while line:
@@ -316,25 +324,28 @@ class Brush(Actor):
 
     def AdjustVert(self, line:str, mult_coords) -> str:
         # TODO: convert coords to world space, perform mirror, then convert back to object space for saving
-        if not mult_coords:
+        if mult_coords is None:
             return line
         match = poly.match(line)
         x = float(match.group(2))
         y = float(match.group(4))
         z = float(match.group(6))
 
-        x *= mult_coords[0]
-        x = FormatPolyCoord(x)
-        y *= mult_coords[1]
-        y = FormatPolyCoord(y)
-        z *= mult_coords[2]
-        z = FormatPolyCoord(z)
+        x -= self.oldPrePivot[0]
+        y -= self.oldPrePivot[1]
+        z -= self.oldPrePivot[2]
+
+        coords = rotate_mult_coords((x,y,z), self.oldRot, self.newRot, mult_coords)
+
+        x = FormatPolyCoord(coords[0] + self.newPrePivot[0])
+        y = FormatPolyCoord(coords[1] + self.newPrePivot[1])
+        z = FormatPolyCoord(coords[2] + self.newPrePivot[2])
 
         line = match.group(1) + '{},{},{}'.format(x,y,z) + match.group(8)
         return line
     
     def AdjustTextCoord(self, Normal:int, Pan:int|None, TextureU:int, TextureV:int, mult_coords) -> None:
-        if not mult_coords:
+        if mult_coords is None:
             return
 
         match_u = poly.match(self.lines[TextureU])
@@ -370,11 +381,13 @@ class Brush(Actor):
         self.lines[TextureV] = match_v.group(1) + '{},{},{}'.format(vx,vy,vz) + match_v.group(8)
     
 
-    def EndPolygon(self, props:dict, first_vert:int, last_vert:int, mult_coords):
-        Normal = props['Normal']
-        Pan = props.get('Pan')
-        TextureU = props['TextureU']
-        TextureV = props['TextureV']
+    def FinalizePolygon(self, props:dict, mult_coords):
+        first_vert:int = props['first_vert']
+        last_vert:int = props['last_vert']
+        Normal:int = props['Normal']
+        Pan:int|None = props.get('Pan')
+        TextureU:int = props['TextureU']
+        TextureV:int = props['TextureV']
         self.AdjustTextCoord(Normal, Pan, TextureU, TextureV, mult_coords)
 
         i = props.get('Origin')
@@ -386,7 +399,7 @@ class Brush(Actor):
 
         # only invert if odd number of flips
         num_flips:int = 0
-        if mult_coords:
+        if mult_coords is not None:
             num_flips = int(mult_coords[0]<0) + int(mult_coords[1]<0) + int(mult_coords[2]<0)
         if num_flips % 2 == 1:
             polys = self.lines[first_vert:last_vert]
@@ -416,8 +429,7 @@ class Brush(Actor):
                 assert self.lines[last_vert].strip().startswith('Vertex ')
                 assert last_vert-first_vert >= 2
                 assert last_vert-first_vert < 100
-                self.polylist.append([*range(first_vert, last_vert)])
-                self.EndPolygon(props, first_vert, last_vert, mult_coords)
+                self.polylist.append({'first_vert': first_vert, 'last_vert': last_vert, **props})
                 return
 
             line:str = file.readline()
@@ -425,10 +437,7 @@ class Brush(Actor):
         raise RuntimeError('unexpected end of polygon?')
 
 
-class Mover(Brush):
-    def IsMover(self) -> bool:
-        return True
-    
+class Brush(OldBrush):
     def Finalize(self, mult_coords):
         super().Finalize(mult_coords)
         i = self.GetPropIdx('PostScale')
@@ -440,8 +449,8 @@ class Mover(Brush):
             self.lines[i] = self.FixScale(self.lines[i], mult_coords)
         
     
-    def EndPolygon(self, props:dict, first_vert:int, last_vert:int, mult_coords):
-        pass # Movers use PostScale instead of modifying vertices
+    def FinalizePolygon(self, props:dict, mult_coords):
+        pass # use PostScale instead of modifying vertices
 
 
     def FixScale(self, line:str, mult_coords) -> str:
@@ -460,8 +469,12 @@ class Mover(Brush):
         x = float(x) * mult_coords[0]
         y = float(y) * mult_coords[1]
         z = float(z) * mult_coords[2]
-        line = m.group(1) + '=(Scale=' + '(X={},Y={},Z={})'.format(x,y,z) + ',' + m.group(12) + m.group(13)
+        line = m.group(1) + '=(Scale=' + '(X={:f},Y={:f},Z={:f})'.format(x,y,z) + ',' + m.group(12) + m.group(13)
         return line
+
+
+class Mover(Brush):
+    pass
 
 
 class DeusExLevelInfo(Actor):
