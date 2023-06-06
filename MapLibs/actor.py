@@ -86,13 +86,15 @@ def MirrorList(l):
     return l[0:1] + l[-1:0:-1]
 
 
-def mirror_rotation(r, offset):
+def mirror_rotation(r, offset, allow_negative=False):
     yaw = int(r[1])
     yaw += offset # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
-    yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
+    if not allow_negative:
+        yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
     yaw = -yaw
     yaw -= offset # undo the offset
-    yaw %= 65535
+    if not allow_negative:
+        yaw %= 65535
     return (r[0], yaw, r[2])
 
 
@@ -206,15 +208,18 @@ class Actor:
         return line
     
 
-    def ProcLocRot(self, line:str, mult_coords) -> str:
+    def _ProcLocRot(self, line:str, mult_coords, oldRot, newRot) -> str:
         if mult_coords is None:
             return line
         
         (x,y,z,match) = self.GetLoc(line)
-        coords = rotate_mult_coords((x,y,z), self.oldRot, self.newRot, mult_coords)
+        coords = rotate_mult_coords((x,y,z), oldRot, newRot, mult_coords)
 
         line = match.group(1) + '=(X={},Y={},Z={})'.format(x,y,z) + match.group(11)
         return line
+    
+    def ProcLocRot(self, line:str, mult_coords) -> str:
+        return self._ProcLocRot(line, mult_coords, self.oldRot, self.newRot)
     
 
     def GetRot(self, line:str) -> tuple:
@@ -235,7 +240,7 @@ class Actor:
         return (int(pitch), int(yaw), int(roll), match)
     
 
-    def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
+    def ProcRot(self, line:str, mult_coords:tuple|None, allow_negative=False) -> str:
         if mult_coords is None:
             return line
         
@@ -250,11 +255,11 @@ class Actor:
 
         # if flip X
         if mult_coords[0] < 0 and mult_coords[1] > 0:
-            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
+            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset, allow_negative=allow_negative)
         # elif flip Y
         elif mult_coords[1] < 0 and mult_coords[0] > 0:
             rot_offset += 16384
-            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
+            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset, allow_negative=allow_negative)
 
         line = match.group(1) + '=(Pitch={:d},Yaw={:d},Roll={:d})'.format(pitch,yaw,roll) + match.group(8)
         return line
@@ -474,7 +479,7 @@ class Mover(Brush):
         
         for (prop, i) in self.props.items():
             if prop.startswith('KeyRot('):
-                self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
+                self.lines[i] = self.ProcRot(self.lines[i], mult_coords, allow_negative=True) # negative is important for which direction to move
             if prop.startswith('KeyPos('):
                 self.lines[i] = self.ProcLoc(self.lines[i], mult_coords) # idk if this needs to be ProcLoc or ProcLocRot, will need to find an example
 
