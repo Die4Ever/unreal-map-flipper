@@ -441,8 +441,8 @@ class Brush(OldBrush):
     def Finalize(self, mult_coords):
         super().Finalize(mult_coords)
         i = self.GetPropIdx('PostScale')
-        if not i:
-            line = '    PostScale=(Scale=(X={},Y={},Z={}),SheerAxis=SHEER_ZX)\n'.format(-1,1,1)
+        if not i and mult_coords is not None:
+            line = '    PostScale=(Scale=(X={:f},Y={:f},Z={:f}),SheerAxis=SHEER_ZX)\n'.format(mult_coords[0], mult_coords[1], mult_coords[2])
             self.props['PostScale'] = len(self.lines)-1
             self.lines.insert(-1, line)
         else:
