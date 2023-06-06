@@ -23,11 +23,12 @@ created = set()
 def CreateImport(export:Path, do_sleep=False):
     global created
     outname = export.stem+'_'+mult_coords_desc
+    if do_sleep:
+        pyperclip.copy(outname)
     if outname in created:
         return outname
     created.add(outname)
     if do_sleep:
-        pyperclip.copy(outname)
         sleep(1) # HACK: make sure the files are fully written
 
     print('reading', export)
@@ -72,8 +73,9 @@ def DoAll():
         export = indir / (last_map+'.t3d')
         print('')
         print('')
-        print(last_map, 'copied to clipboard, waiting for file', export)
-        pyperclip.copy(last_map)
+        if not export.exists():
+            pyperclip.copy(last_map)
+            print(last_map, 'copied to clipboard, waiting for file', export)
         while not export.exists():
             sleep(0.2)
         ReadExport(export)
