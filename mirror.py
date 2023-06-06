@@ -19,7 +19,9 @@ elif args.source and args.dest and args.mult:
     assert source.is_file()
     dest = Path(args.dest)
     assert dest.parent.is_dir()
-    mult_match = re.match(r'^\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*\)\s*$', args.mult)
+    coord_re = r'\s*([^,]+)\s*'
+    mult_re = r'\s*\(' + coord_re+','+coord_re+','+coord_re + r'\)\s*'
+    mult_match = re.match(mult_re, args.mult)
     x = float(mult_match.group(1))
     y = float(mult_match.group(2))
     z = float(mult_match.group(3))

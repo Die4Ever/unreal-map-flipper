@@ -16,7 +16,7 @@ created = set()
 
 
 def ProcFile(source:Path, dest:Path, mult:tuple):
-    print(source, dest, mult)
+    print('source:', source, 'dest:', dest, 'mult:', mult)
     m = Map()
     m.SetMirror(mult_coords)
     m.Read(source)
