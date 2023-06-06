@@ -307,7 +307,7 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actor.lines[-1], 'End Actor')
         self.assertEqual(brushfile.readline(), 'End Test')
         try:
-            self.assertEqual(len(str(actor)), 880, 'string of actor length')
+            self.assertEqual(len(str(actor)), 824, 'string of actor length')
         except Exception as e:
             print('ERROR!')
             print(str(actor))

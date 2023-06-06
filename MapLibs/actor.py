@@ -445,7 +445,7 @@ class Brush(OldBrush):
             line = '    PostScale=(Scale=(X={:f},Y={:f},Z={:f}),SheerAxis=SHEER_ZX)\n'.format(mult_coords[0], mult_coords[1], mult_coords[2])
             self.props['PostScale'] = len(self.lines)-1
             self.lines.insert(-1, line)
-        else:
+        elif i:
             self.lines[i] = self.FixScale(self.lines[i], mult_coords)
         
     
