@@ -12,7 +12,7 @@ pan_regex = re.compile(r'^(\s+Pan\s+)U=([^\s]+)\s+V=([^\s]+)(\s*)$')
 coord = r'(-?\d+(\.\d+)?)'
 vect_pattern = r'\((X=' + coord + ')?,?(Y=' + coord + ')?,?(Z=' + coord + ')?\)'
 vect_regex = re.compile(vect_pattern)
-loc = re.compile(r'^(\s+\w+)=' + vect_pattern + r'(\s*)$')
+loc = re.compile(r'^(\s+[^=]+)=' + vect_pattern + r'(\s*)$')
 
 axis = r'(-?\d+)'
 rot = re.compile(r'^(\s+[^=]+)=\((Pitch=' +axis+ r')?,?(Yaw=' +axis+ r')?,?(Roll=' +axis+ r')?\)(\s*)$')
@@ -162,11 +162,6 @@ class Actor:
                 self.lines.insert(-2, line) # don't overwrite the End Actor
 
             for i in self.IterProps('Rotation', 'BaseRot', 'SavedRot', 'ViewRotation'):
-                self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
-            
-            for (prop, i) in self.props.items():
-                if not prop.startswith('KeyRot('):
-                    continue
                 self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
 
         i = self.GetPropIdx('Rotation')
@@ -474,7 +469,14 @@ class Brush(OldBrush):
 
 
 class Mover(Brush):
-    pass
+    def Finalize(self, mult_coords):
+        super().Finalize(mult_coords)
+        
+        for (prop, i) in self.props.items():
+            if prop.startswith('KeyRot('):
+                self.lines[i] = self.ProcRot(self.lines[i], mult_coords)
+            if prop.startswith('KeyPos('):
+                self.lines[i] = self.ProcLoc(self.lines[i], mult_coords) # idk if this needs to be ProcLoc or ProcLocRot, will need to find an example
 
 
 class DeusExLevelInfo(Actor):
