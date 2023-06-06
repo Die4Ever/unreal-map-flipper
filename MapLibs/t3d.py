@@ -21,6 +21,7 @@ class Map:
         self.mult_coords = mult_coords
     
     def Read(self, filepath:Path):
+        print('reading', filepath)
         self.SetMapName(filepath.name)
         with open(filepath, 'r') as file:
             self._Read(file)
