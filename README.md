@@ -15,4 +15,12 @@ Unreal Map Flipper (work in progress)
 
 4. Now you can save the map for real and load it into your game!
 
-![image](https://github.com/Die4Ever/unreal-map-flipper/assets/30947252/e01798e4-f72e-4df9-9d1a-b7fde5ebea98)
+![image](https://github.com/Die4Ever/unreal-map-flipper/assets/30947252/13ae0670-5add-441d-92a8-62e2b831af19)
+
+![image](https://github.com/Die4Ever/unreal-map-flipper/assets/30947252/b326c886-9c10-4142-8429-34945a84cee4)
+
+![image](https://github.com/Die4Ever/unreal-map-flipper/assets/30947252/932f939f-a15f-41e6-adff-e2cfdd54bedc)
+
+![image](https://github.com/Die4Ever/unreal-map-flipper/assets/30947252/c14aee09-301f-435b-962e-795fc1c0d4c9)
+
+![image](https://github.com/Die4Ever/unreal-map-flipper/assets/30947252/a613ce3e-fdeb-43f8-ab79-6862b52472c3)
