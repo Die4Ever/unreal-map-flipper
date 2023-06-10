@@ -13,6 +13,7 @@ def GetDefaultOut() -> Path:
 class Map:
     def __init__(self):
         self.actors = []
+        self.actornames = {}
         self.mult_coords = None#(1,1,1)
         self.name = None
 
@@ -35,7 +36,9 @@ class Map:
             if stripped.startswith('Begin Actor '):
                 actor = CreateActor(self, line)
                 actor.Read(file, self.mult_coords)
-                self.actors.append(actor)
+                if actor.objectname not in self.actornames:
+                    self.actornames[actor.objectname] = actor
+                    self.actors.append(actor)
             elif stripped == 'End Map':
                 break
             else:

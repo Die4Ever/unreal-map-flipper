@@ -53,6 +53,11 @@ classes_rot_offsets = dict(
     LuciusDeBeers=16384,
     Switch1=16384,
     Switch2=16384,
+    AlarmUnit=16384,
+    Faucet=16384,
+    CageLight=16384,
+    ShowerFaucet=16384,
+    ShowerHead=16384,
 
     # auto generated list of Decorations (any non-zero values should be moved above this line):
     DeusExDecoration=0,
@@ -62,7 +67,6 @@ classes_rot_offsets = dict(
     BoneFemur=0,
     BoneSkull=0,
     Button1=0,
-    CageLight=0,
     Cart=0,
     CeilingFan=0,
     CeilingFanMotor=0,
@@ -94,7 +98,6 @@ classes_rot_offsets = dict(
     Computers=0,
     HackableDevices=0,
     AcousticSensor=0,
-    AlarmUnit=0,
     AutoTurretGun=0,
     AutoTurretGunSmall=0,
     Phone=0,
@@ -102,7 +105,6 @@ classes_rot_offsets = dict(
     Fan1=0,
     Fan1Vertical=0,
     Fan2=0,
-    Faucet=0,
     FlagPole=0,
     Flask=0,
     Flowers=0,
@@ -197,8 +199,6 @@ classes_rot_offsets = dict(
     RoadBlock=0,
     ShipsWheel=0,
     ShopLight=0,
-    ShowerFaucet=0,
-    ShowerHead=0,
     SignFloor=0,
     SubwayControlPanel=0,
     Toilet=0,
@@ -388,15 +388,14 @@ def MirrorList(l):
     return l[0:1] + l[-1:0:-1]
 
 
-def mirror_rotation(r, offset, allow_negative=False):
+def mirror_rotation(r, offset):
     yaw = int(r[1])
+    oldyaw = yaw
     yaw += offset # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
-    if not allow_negative:
-        yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
+    yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
     yaw = -yaw
     yaw -= offset # undo the offset
-    if not allow_negative:
-        yaw %= 65535
+    yaw %= 65535
     return (r[0], yaw, r[2])
 
 
@@ -542,7 +541,7 @@ class Actor:
         return (int(pitch), int(yaw), int(roll), match)
     
 
-    def ProcRot(self, line:str, mult_coords:tuple|None, allow_negative=False) -> str:
+    def ProcRot(self, line:str, mult_coords:tuple|None) -> str:
         if mult_coords is None:
             return line
         
@@ -557,11 +556,11 @@ class Actor:
 
         # if flip X
         if mult_coords[0] < 0 and mult_coords[1] > 0:
-            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset, allow_negative=allow_negative)
+            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
         # elif flip Y
         elif mult_coords[1] < 0 and mult_coords[0] > 0:
             rot_offset += 16384
-            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset, allow_negative=allow_negative)
+            (pitch, yaw, roll) = mirror_rotation((pitch,yaw,roll), rot_offset)
 
         line = match.group(1) + '=(Pitch={:d},Yaw={:d},Roll={:d})'.format(pitch,yaw,roll) + match.group(8)
         return line
@@ -780,8 +779,6 @@ class Mover(Brush):
         super().Finalize(mult_coords)
         
         for (prop, i) in self.props.items():
-            if prop.startswith('KeyRot('):
-                self.lines[i] = self.ProcRot(self.lines[i], mult_coords, allow_negative=True) # negative is important for which direction to move
             if prop.startswith('KeyPos('):
                 self.lines[i] = self.ProcLoc(self.lines[i], mult_coords) # idk if this needs to be ProcLoc or ProcLocRot, will need to find an example
 
