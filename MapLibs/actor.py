@@ -7,6 +7,8 @@ poly = re.compile(r'^(\s*\w+\s+)'+coord+','+coord+','+coord+r'(\s*$)')
 
 poly_prop = re.compile(r'^(\s*)(\w+)(\s+)(.*)$')
 
+flags_regex = re.compile(r'^\s*Begin Polygon.*Flags=(\d+)\s+.*$')
+
 pan_regex = re.compile(r'^(\s+Pan\s+)U=([^\s]+)\s+V=([^\s]+)(\s*)$')
 
 coord = r'(-?\d+(\.\d+)?)'
@@ -58,6 +60,7 @@ classes_rot_offsets = dict(
     CageLight=16384,
     ShowerFaucet=16384,
     ShowerHead=16384,
+    LightSwitch=16384,
 
     # auto generated list of Decorations (any non-zero values should be moved above this line):
     DeusExDecoration=0,
@@ -154,7 +157,6 @@ classes_rot_offsets = dict(
     NewspaperOpen=0,
     LifeSupportBase=0,
     Lightbulb=0,
-    LightSwitch=0,
     Microscope=0,
     NewYorkDecoration=0,
     NYEagleStatue=0,
@@ -390,7 +392,6 @@ def MirrorList(l):
 
 def mirror_rotation(r, offset):
     yaw = int(r[1])
-    oldyaw = yaw
     yaw += offset # offset by 16384 because we want to align with north/south not west/east, if this was a clock we want yaw 0 to be 12 o'clock
     yaw %= 65535 # 65535 is more accurate than 65536, I guess it's true that 65535 is 360 degrees and not 65536
     yaw = -yaw
@@ -598,8 +599,12 @@ class Actor:
 class OldBrush(Actor): # well this was a big waste of time? lol
     def Finalize(self, mult_coords):# TODO: more checks in finalize
         super().Finalize(mult_coords)
+        if type(self) == OldBrush:
+            self.MirrorVerts(mult_coords)
+
+    def MirrorVerts(self, mult_coords):
         i = self.GetPropIdx('PrePivot')
-        if type(self) == OldBrush and i and mult_coords is not None:
+        if i and mult_coords is not None:
             (x,y,z,match) = self.GetLoc(self.lines[i])
             self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
             self.oldPrePivot = (x,y,z)
@@ -734,13 +739,25 @@ class OldBrush(Actor): # well this was a big waste of time? lol
                 return
 
             line:str = file.readline()
-        
+
         raise RuntimeError('unexpected end of polygon?')
 
 
 class Brush(OldBrush):
     def Finalize(self, mult_coords):
         super().Finalize(mult_coords)
+
+        # check if this is a portal
+        for p in self.polylist:
+            begin = self.lines[p['Begin']]
+            flags = flags_regex.match(begin)
+            if flags:
+                flags = int(flags.group(1))
+            # if portal, increase the size slightly to fix rounding issues (vandenberg tunnels, of course)
+            if flags and flags & 67108864:
+                mult_coords = (mult_coords[0]*1.001, mult_coords[1]*1.001, mult_coords[2]*1.001)
+                break
+
         i = self.GetPropIdx('PostScale')
         if not i and mult_coords is not None:
             line = '    PostScale=(Scale=(X={:f},Y={:f},Z={:f}),SheerAxis=SHEER_ZX)\n'.format(mult_coords[0], mult_coords[1], mult_coords[2])
@@ -750,10 +767,6 @@ class Brush(OldBrush):
             self.lines[i] = self.FixScale(self.lines[i], mult_coords)
         
     
-    def FinalizePolygon(self, props:dict, mult_coords):
-        pass # use PostScale instead of modifying vertices
-
-
     def FixScale(self, line:str, mult_coords) -> str:
         if not mult_coords:
             return line
