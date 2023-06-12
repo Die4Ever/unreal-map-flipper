@@ -475,6 +475,10 @@ class Actor:
         for i in self.IterProps('Location', 'BasePos', 'SavedPos', 'OldLocation'):
             self.lines[i] = self.ProcLoc(self.lines[i], mult_coords)
 
+        self._Finalize(mult_coords)
+
+    def _Finalize(self, mult_coords):
+        pass
 
     def GetLoc(self, line:str) -> tuple:
         match = loc.match(line)
@@ -585,7 +589,6 @@ class Actor:
                 self.props[prop.group(2)] = len(self.lines)
             self.lines.append(line)
             if stripped == 'End Actor':
-                self.Finalize(mult_coords)
                 return
             line:str = file.readline()
         
@@ -597,8 +600,8 @@ class Actor:
 
 
 class OldBrush(Actor): # well this was a big waste of time? lol
-    def Finalize(self, mult_coords):# TODO: more checks in finalize
-        super().Finalize(mult_coords)
+    def _Finalize(self, mult_coords):# TODO: more checks in finalize
+        super()._Finalize(mult_coords)
         if type(self) == OldBrush:
             self.MirrorVerts(mult_coords)
 
@@ -744,8 +747,8 @@ class OldBrush(Actor): # well this was a big waste of time? lol
 
 
 class Brush(OldBrush):
-    def Finalize(self, mult_coords):
-        super().Finalize(mult_coords)
+    def _Finalize(self, mult_coords):
+        super()._Finalize(mult_coords)
 
         # check if this is a portal
         for p in self.polylist:
@@ -788,8 +791,8 @@ class Brush(OldBrush):
 
 
 class Mover(Brush):
-    def Finalize(self, mult_coords):
-        super().Finalize(mult_coords)
+    def _Finalize(self, mult_coords):
+        super()._Finalize(mult_coords)
         
         for (prop, i) in self.props.items():
             if prop.startswith('KeyPos('):
@@ -797,8 +800,8 @@ class Mover(Brush):
 
 
 class DeusExLevelInfo(Actor):
-    def Finalize(self, mult_coords):
-        super().Finalize(mult_coords)
+    def _Read(self, file, mult_coords:tuple|None):
+        super()._Read(file, mult_coords)
         i = self.GetPropIdx('MapName')
         if i and self.parent:
             match = prop_regex.match(self.lines[i])

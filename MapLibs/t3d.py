@@ -27,6 +27,19 @@ class Map:
         with open(filepath, 'r') as file:
             self._Read(file)
 
+        self.before_finalize()
+        for a in self.actors:
+            a.Finalize(self.mult_coords)
+        self.after_finalize()
+
+
+    def before_finalize(self):
+        pass # can check self.name and manipulate the self.actornames dictionary
+
+    def after_finalize(self):
+        pass
+
+
     def _Read(self, file):
         line = file.readline().strip()
         assert line == 'Begin Map'

@@ -137,6 +137,7 @@ class T3DTestCase(unittest.TestCase):
         actor:Brush = CreateActor(None, brushfile.readline())
         self.assertEqual(actor.classname, 'Brush')
         actor.Read(brushfile, None)
+        actor.Finalize(None)
 
         self.assertEqual(actor.lines[0], 'Begin Actor Class=Brush Name=Brush49')
         self.assertEqual(actor.lines[1], '    Begin Brush Name=Model14')
@@ -157,6 +158,7 @@ class T3DTestCase(unittest.TestCase):
         self.assertEqual(actor.classname, 'Jock')
         self.assertFalse(isinstance(actor, Brush))
         actor.Read(actorfile, None)
+        actor.Finalize(None)
 
         self.assertEqual(actorfile.readline(), 'Begin Actor Class=AmbientSound Name=AmbientSound0')
 
