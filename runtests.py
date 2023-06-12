@@ -30,170 +30,6 @@ class MockFile:
         self.pos = 0
         self.sep = ''
 
-polygonfile = MockFile(
-"""    Begin Polygon Item=OUTSIDE Texture=ClenMedmWalnt_A Flags=32 Link=1
-             Origin   -00004.000000,+00068.000000,-00004.000000
-             Normal   +00000.000000,+00000.000000,-00001.000000
-             TextureU -00000.000000,-00001.000000,-00000.000000
-             TextureV -00001.000000,+00000.000000,+00000.000000
-             Vertex   -00004.000000,+00072.000000,-00004.000000
-             Vertex   +00004.000000,+00072.000000,-00004.000000
-             Vertex   +00004.000000,-00072.000000,-00004.000000
-             Vertex   -00004.000000,-00072.000000,-00004.000000
-          End Polygon
-End Test""")
-
-brushfile = MockFile(
-"""Begin Actor Class=Brush Name=Brush49
-    Begin Brush Name=Model14
-       Begin PolyList
-          Begin Polygon Item=OUTSIDE Texture=ClenMedmWalnt_A Flags=32 Link=0
-             Origin   -00004.000000,-00068.000000,+00004.000000
-             Normal   +00000.000000,+00000.000000,+00001.000000
-             TextureU +00000.000000,+00001.000000,+00000.000000
-             TextureV -00001.000000,+00000.000000,+00000.000000
-             Vertex   -00004.000000,-00072.000000,+00004.000000
-             Vertex   +00004.000000,-00072.000000,+00004.000000
-             Vertex   +00004.000000,+00072.000000,+00004.000000
-             Vertex   -00004.000000,+00072.000000,+00004.000000
-          End Polygon
-       End PolyList
-    End Brush
-    Brush=Model'MyLevel.Model14'
-    PrePivot=(X=4.000000,Y=68.000000,Z=-4.000000)
-    Name=Brush49
-End Actor
-End Test""")
-
-actorfile = MockFile(
-"""Begin Map
-Begin Actor Class=Jock Name=Jock0
-    Orders=Standing
-    bLikesNeutral=False
-    bHateCarcass=True
-    bHateDistress=True
-    bReactAlarm=False
-    bReactShot=True
-    bReactDistress=True
-    InitialAlliances(0)=(AllianceName=Player)
-    InitialAlliances(1)=(AllianceName=BarFlys)
-    InitialInventory(0)=(Inventory=Class'DeusEx.WeaponStealthPistol')
-    InitialInventory(1)=(Inventory=Class'DeusEx.Ammo10mm',Count=12)
-    InitialInventory(2)=(Inventory=Class'DeusEx.WeaponCombatKnife')
-    FootRegion=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=492,ZoneNumber=1)
-    HeadRegion=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=485,ZoneNumber=1)
-    ViewRotation=(Yaw=11040)
-    VisibilityThreshold=0.000000
-    Alliance=BarFlys
-    LastRenderTime=139.187988
-    DistanceFromPlayer=542.363525
-    Level=LevelInfo'MyLevel.LevelInfo0'
-    Tag=Jock
-    Base=LevelInfo'MyLevel.LevelInfo0'
-    Region=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=485,ZoneNumber=1)
-    Location=(X=-942.777710,Y=-487.315552,Z=48.964230)
-    Rotation=(Yaw=11040)
-    OldLocation=(X=-866.068909,Y=1041.609253,Z=-16.400154)
-    BarkBindName="Man"
-    UnfamiliarName="Pilot guy"
-    Name=Jock0
-End Actor
-Begin Actor Class=AmbientSound Name=AmbientSound0
-    LastRenderTime=139.187988
-    DistanceFromPlayer=3083.201416
-    Level=LevelInfo'MyLevel.LevelInfo0'
-    Tag=AmbientSound
-    Region=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=78,ZoneNumber=1)
-    Location=(X=-3415.629883,Y=673.263794,Z=59.187805)
-    OldLocation=(X=-1396.085693,Y=1057.143433,Z=-53.899948)
-    SoundRadius=6
-    SoundVolume=100
-    AmbientSound=Sound'Ambient.Ambient.EchoWaterDrips'
-    Name=AmbientSound0
-End Actor
-End Map""")
-
-unatcopit = MockFile(
-"""Begin Map
-Begin Actor Class=Brush Name=Brush359
-    CsgOper=CSG_Subtract
-    MainScale=(SheerAxis=SHEER_ZX)
-    PostScale=(Scale=(X=0.625000,Y=1.454545,Z=2.100000),SheerAxis=SHEER_ZX)
-    DistanceFromPlayer=907.171448
-    Level=LevelInfo'MyLevel.LevelInfo0'
-    Tag=Brush
-    Region=(Zone=LevelInfo'MyLevel.LevelInfo0',iLeaf=-1)
-    Location=(X=-272.000000,Y=576.000000,Z=240.000000)
-    Rotation=(Pitch=16384,Yaw=16384)
-    Begin Brush Name=Model354
-       Begin PolyList
-          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=0
-             Origin   -00194.285721,-00128.000000,+00088.000023
-             Normal   +00000.000000,+00000.000000,+00001.000000
-             TextureU +00000.000000,+00001.250000,+00000.000000
-             TextureV -00004.200000,+00000.000000,+00000.000000
-             Vertex   -00080.000000,-00128.000000,+00088.000000
-             Vertex   +00080.000000,-00128.000000,+00088.000000
-             Vertex   +00080.000000,+00128.000000,+00088.000000
-             Vertex   -00080.000000,+00128.000000,+00088.000000
-          End Polygon
-          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=1
-             Origin   -00194.285721,+00128.000000,-00088.000023
-             Normal   +00000.000000,+00000.000000,-00001.000000
-             TextureU +00000.000000,-00001.249999,+00000.000000
-             TextureV -00004.200000,+00000.000000,+00000.000000
-             Vertex   -00080.000000,+00128.000000,-00088.000000
-             Vertex   +00080.000000,+00128.000000,-00088.000000
-             Vertex   +00080.000000,-00128.000000,-00088.000000
-             Vertex   -00080.000000,-00128.000000,-00088.000000
-          End Polygon
-          Begin Polygon Item=OUTSIDE Texture=Marker_sky Link=2
-             Origin   -00080.000000,+00128.000000,-00088.000000
-             Normal   +00000.000000,+00001.000000,+00000.000000
-             TextureU +00001.000000,+00000.000000,+00000.000000
-             TextureV +00000.000000,+00000.000000,-00001.000000
-             Vertex   -00080.000000,+00128.000000,-00088.000000
-             Vertex   -00080.000000,+00128.000000,+00088.000000
-             Vertex   +00080.000000,+00128.000000,+00088.000000
-             Vertex   +00080.000000,+00128.000000,-00088.000000
-          End Polygon
-          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=3
-             Origin   -00194.285721,-00128.000000,-00088.000023
-             Normal   +00000.000000,-00001.000000,+00000.000000
-             TextureU +00000.000000,+00000.000000,+00002.909090
-             TextureV -00004.200000,+00000.000000,+00000.000000
-             Vertex   +00080.000000,-00128.000000,-00088.000000
-             Vertex   +00080.000000,-00128.000000,+00088.000000
-             Vertex   -00080.000000,-00128.000000,+00088.000000
-             Vertex   -00080.000000,-00128.000000,-00088.000000
-          End Polygon
-          Begin Polygon Item=OUTSIDE Texture=UN_Wall_Green Flags=8388608 Link=4
-             Origin   +00080.000015,-00307.199921,+00308.000122
-             Normal   +00001.000000,+00000.000000,+00000.000000
-             TextureU +00000.000000,-00000.625000,+00000.000000
-             TextureV +00000.000000,+00000.000000,-00001.454545
-             Vertex   +00080.000000,+00128.000000,-00088.000000
-             Vertex   +00080.000000,+00128.000000,+00088.000000
-             Vertex   +00080.000000,-00128.000000,+00088.000000
-             Vertex   +00080.000000,-00128.000000,-00088.000000
-          End Polygon
-          Begin Polygon Item=OUTSIDE Texture=Marker_sky Link=5
-             Origin   -00080.000000,-00128.000000,-00088.000000
-             Normal   -00001.000000,+00000.000000,+00000.000000
-             TextureU +00000.000000,+00001.000000,+00000.000000
-             TextureV +00000.000000,+00000.000000,-00001.000000
-             Vertex   -00080.000000,-00128.000000,-00088.000000
-             Vertex   -00080.000000,-00128.000000,+00088.000000
-             Vertex   -00080.000000,+00128.000000,+00088.000000
-             Vertex   -00080.000000,+00128.000000,-00088.000000
-          End Polygon
-       End PolyList
-    End Brush
-    Brush=Model'MyLevel.Model354'
-    PrePivot=(X=-80.000000,Y=128.000000,Z=-88.000023)
-    Name=Brush359
-End Actor
-End Map""")
 
 @typechecked
 class T3DTestCase(unittest.TestCase):
@@ -388,6 +224,173 @@ class T3DTestCase(unittest.TestCase):
         map._Read(unatcopit)
         print(map.ToString())
 
+
+
+### TEST DATA ###
+polygonfile = MockFile(
+"""    Begin Polygon Item=OUTSIDE Texture=ClenMedmWalnt_A Flags=32 Link=1
+             Origin   -00004.000000,+00068.000000,-00004.000000
+             Normal   +00000.000000,+00000.000000,-00001.000000
+             TextureU -00000.000000,-00001.000000,-00000.000000
+             TextureV -00001.000000,+00000.000000,+00000.000000
+             Vertex   -00004.000000,+00072.000000,-00004.000000
+             Vertex   +00004.000000,+00072.000000,-00004.000000
+             Vertex   +00004.000000,-00072.000000,-00004.000000
+             Vertex   -00004.000000,-00072.000000,-00004.000000
+          End Polygon
+End Test""")
+
+brushfile = MockFile(
+"""Begin Actor Class=Brush Name=Brush49
+    Begin Brush Name=Model14
+       Begin PolyList
+          Begin Polygon Item=OUTSIDE Texture=ClenMedmWalnt_A Flags=32 Link=0
+             Origin   -00004.000000,-00068.000000,+00004.000000
+             Normal   +00000.000000,+00000.000000,+00001.000000
+             TextureU +00000.000000,+00001.000000,+00000.000000
+             TextureV -00001.000000,+00000.000000,+00000.000000
+             Vertex   -00004.000000,-00072.000000,+00004.000000
+             Vertex   +00004.000000,-00072.000000,+00004.000000
+             Vertex   +00004.000000,+00072.000000,+00004.000000
+             Vertex   -00004.000000,+00072.000000,+00004.000000
+          End Polygon
+       End PolyList
+    End Brush
+    Brush=Model'MyLevel.Model14'
+    PrePivot=(X=4.000000,Y=68.000000,Z=-4.000000)
+    Name=Brush49
+End Actor
+End Test""")
+
+actorfile = MockFile(
+"""Begin Map
+Begin Actor Class=Jock Name=Jock0
+    Orders=Standing
+    bLikesNeutral=False
+    bHateCarcass=True
+    bHateDistress=True
+    bReactAlarm=False
+    bReactShot=True
+    bReactDistress=True
+    InitialAlliances(0)=(AllianceName=Player)
+    InitialAlliances(1)=(AllianceName=BarFlys)
+    InitialInventory(0)=(Inventory=Class'DeusEx.WeaponStealthPistol')
+    InitialInventory(1)=(Inventory=Class'DeusEx.Ammo10mm',Count=12)
+    InitialInventory(2)=(Inventory=Class'DeusEx.WeaponCombatKnife')
+    FootRegion=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=492,ZoneNumber=1)
+    HeadRegion=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=485,ZoneNumber=1)
+    ViewRotation=(Yaw=11040)
+    VisibilityThreshold=0.000000
+    Alliance=BarFlys
+    LastRenderTime=139.187988
+    DistanceFromPlayer=542.363525
+    Level=LevelInfo'MyLevel.LevelInfo0'
+    Tag=Jock
+    Base=LevelInfo'MyLevel.LevelInfo0'
+    Region=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=485,ZoneNumber=1)
+    Location=(X=-942.777710,Y=-487.315552,Z=48.964230)
+    Rotation=(Yaw=11040)
+    OldLocation=(X=-866.068909,Y=1041.609253,Z=-16.400154)
+    BarkBindName="Man"
+    UnfamiliarName="Pilot guy"
+    Name=Jock0
+End Actor
+Begin Actor Class=AmbientSound Name=AmbientSound0
+    LastRenderTime=139.187988
+    DistanceFromPlayer=3083.201416
+    Level=LevelInfo'MyLevel.LevelInfo0'
+    Tag=AmbientSound
+    Region=(Zone=ZoneInfo'MyLevel.ZoneInfo5',iLeaf=78,ZoneNumber=1)
+    Location=(X=-3415.629883,Y=673.263794,Z=59.187805)
+    OldLocation=(X=-1396.085693,Y=1057.143433,Z=-53.899948)
+    SoundRadius=6
+    SoundVolume=100
+    AmbientSound=Sound'Ambient.Ambient.EchoWaterDrips'
+    Name=AmbientSound0
+End Actor
+End Map""")
+
+unatcopit = MockFile(
+"""Begin Map
+Begin Actor Class=Brush Name=Brush359
+    CsgOper=CSG_Subtract
+    MainScale=(SheerAxis=SHEER_ZX)
+    PostScale=(Scale=(X=0.625000,Y=1.454545,Z=2.100000),SheerAxis=SHEER_ZX)
+    DistanceFromPlayer=907.171448
+    Level=LevelInfo'MyLevel.LevelInfo0'
+    Tag=Brush
+    Region=(Zone=LevelInfo'MyLevel.LevelInfo0',iLeaf=-1)
+    Location=(X=-272.000000,Y=576.000000,Z=240.000000)
+    Rotation=(Pitch=16384,Yaw=16384)
+    Begin Brush Name=Model354
+       Begin PolyList
+          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=0
+             Origin   -00194.285721,-00128.000000,+00088.000023
+             Normal   +00000.000000,+00000.000000,+00001.000000
+             TextureU +00000.000000,+00001.250000,+00000.000000
+             TextureV -00004.200000,+00000.000000,+00000.000000
+             Vertex   -00080.000000,-00128.000000,+00088.000000
+             Vertex   +00080.000000,-00128.000000,+00088.000000
+             Vertex   +00080.000000,+00128.000000,+00088.000000
+             Vertex   -00080.000000,+00128.000000,+00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=1
+             Origin   -00194.285721,+00128.000000,-00088.000023
+             Normal   +00000.000000,+00000.000000,-00001.000000
+             TextureU +00000.000000,-00001.249999,+00000.000000
+             TextureV -00004.200000,+00000.000000,+00000.000000
+             Vertex   -00080.000000,+00128.000000,-00088.000000
+             Vertex   +00080.000000,+00128.000000,-00088.000000
+             Vertex   +00080.000000,-00128.000000,-00088.000000
+             Vertex   -00080.000000,-00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Marker_sky Link=2
+             Origin   -00080.000000,+00128.000000,-00088.000000
+             Normal   +00000.000000,+00001.000000,+00000.000000
+             TextureU +00001.000000,+00000.000000,+00000.000000
+             TextureV +00000.000000,+00000.000000,-00001.000000
+             Vertex   -00080.000000,+00128.000000,-00088.000000
+             Vertex   -00080.000000,+00128.000000,+00088.000000
+             Vertex   +00080.000000,+00128.000000,+00088.000000
+             Vertex   +00080.000000,+00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Uob_Far_Wall_B Flags=8388608 Link=3
+             Origin   -00194.285721,-00128.000000,-00088.000023
+             Normal   +00000.000000,-00001.000000,+00000.000000
+             TextureU +00000.000000,+00000.000000,+00002.909090
+             TextureV -00004.200000,+00000.000000,+00000.000000
+             Vertex   +00080.000000,-00128.000000,-00088.000000
+             Vertex   +00080.000000,-00128.000000,+00088.000000
+             Vertex   -00080.000000,-00128.000000,+00088.000000
+             Vertex   -00080.000000,-00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=UN_Wall_Green Flags=8388608 Link=4
+             Origin   +00080.000015,-00307.199921,+00308.000122
+             Normal   +00001.000000,+00000.000000,+00000.000000
+             TextureU +00000.000000,-00000.625000,+00000.000000
+             TextureV +00000.000000,+00000.000000,-00001.454545
+             Vertex   +00080.000000,+00128.000000,-00088.000000
+             Vertex   +00080.000000,+00128.000000,+00088.000000
+             Vertex   +00080.000000,-00128.000000,+00088.000000
+             Vertex   +00080.000000,-00128.000000,-00088.000000
+          End Polygon
+          Begin Polygon Item=OUTSIDE Texture=Marker_sky Link=5
+             Origin   -00080.000000,-00128.000000,-00088.000000
+             Normal   -00001.000000,+00000.000000,+00000.000000
+             TextureU +00000.000000,+00001.000000,+00000.000000
+             TextureV +00000.000000,+00000.000000,-00001.000000
+             Vertex   -00080.000000,-00128.000000,-00088.000000
+             Vertex   -00080.000000,-00128.000000,+00088.000000
+             Vertex   -00080.000000,+00128.000000,+00088.000000
+             Vertex   -00080.000000,+00128.000000,-00088.000000
+          End Polygon
+       End PolyList
+    End Brush
+    Brush=Model'MyLevel.Model354'
+    PrePivot=(X=-80.000000,Y=128.000000,Z=-88.000023)
+    Name=Brush359
+End Actor
+End Map""")
 
 
 if __name__ == "__main__":
