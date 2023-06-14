@@ -26,9 +26,9 @@ def ProcFile(source:Path, dest:Path, mult:tuple):
 def CreateImport(export:Path, do_sleep=False):
     global created
     outname = export.stem+'_'+mult_coords_desc
-    if do_sleep:
-        pyperclip.copy(outname)
     if outname in created:
+        if do_sleep:
+            pyperclip.copy(outname)
         return outname
     created.add(outname)
     if do_sleep:
@@ -36,6 +36,8 @@ def CreateImport(export:Path, do_sleep=False):
 
     outpath = outdir / (outname+'.t3d')
     ProcFile(export, outpath, mult_coords)
+    if do_sleep:
+        pyperclip.copy(outname)
     return outname
 
 
