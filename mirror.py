@@ -26,6 +26,9 @@ elif args.source and args.dest and args.mult:
     y = float(mult_match.group(2))
     z = float(mult_match.group(3))
     mult_coords = (x,y,z,)
+    if x==1 and y==1 and z==1:
+        mult_coords = None
     commands.ProcFile(source, dest, mult_coords)
 else:
+    parser.print_help()
     raise Exception('Need to provide arguments!')

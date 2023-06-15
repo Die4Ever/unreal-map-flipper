@@ -757,7 +757,7 @@ class Brush(OldBrush):
             if flags:
                 flags = int(flags.group(1))
             # if portal, increase the size slightly to fix rounding issues (vandenberg tunnels, of course)
-            if flags and flags & 67108864:
+            if flags and flags & 67108864 and mult_coords is not None:
                 mult_coords = (mult_coords[0]*1.001, mult_coords[1]*1.001, mult_coords[2]*1.001)
                 break
 

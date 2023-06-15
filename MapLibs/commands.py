@@ -18,7 +18,8 @@ created = set()
 def ProcFile(source:Path, dest:Path, mult:tuple):
     print('source:', source, 'dest:', dest, 'mult:', mult)
     m = Map()
-    m.SetMirror(mult)
+    if mult is not None:
+        m.SetMirror(mult)
     m.Read(source)
     m.Write(dest)
 
