@@ -19,7 +19,7 @@ loc = re.compile(r'^(\s+[^=]+)=' + vect_pattern + r'(\s*)$')
 axis = r'(-?\d+)'
 rot = re.compile(r'^(\s+[^=]+)=\((Pitch=' +axis+ r')?,?(Yaw=' +axis+ r')?,?(Roll=' +axis+ r')?\)(\s*)$')
 
-getclassname = re.compile(r'^Begin Actor Class=([^ ]+) Name=([^ ]+)\s*$')
+getclassname = re.compile(r'^Begin Actor Class=([^\s]+) Name=([^\s]+)\s*$')
 
 prop_regex = re.compile(r'^(\s*)([^=]+)=(.*)$')
 

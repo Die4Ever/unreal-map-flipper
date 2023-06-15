@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from pathlib import Path
 from MapLibs.actor import CreateActor
 
@@ -12,8 +13,7 @@ def GetDefaultOut() -> Path:
 
 class Map:
     def __init__(self):
-        self.actors = []
-        self.actornames = {}
+        self.actors = OrderedDict()
         self.mult_coords = None#(1,1,1)
         self.name = None
 
@@ -28,13 +28,27 @@ class Map:
             self._Read(file)
 
         self.before_finalize()
-        for a in self.actors:
+        for a in self.actors.values():
             a.Finalize(self.mult_coords)
         self.after_finalize()
 
+    def RemoveActor(self, name:str) -> bool:
+        if name not in self.actors:
+            print('failed to remove actor', name)
+            return False
+        self.actors.pop(name)
+        return True
 
     def before_finalize(self):
-        pass # can check self.name and manipulate the self.actornames dictionary
+        if self.name == '02_NYC_Warehouse':
+            # remove the stupid fence parts that aren't breakable
+            self.RemoveActor('Brush407')
+            self.RemoveActor('Brush391')
+            self.RemoveActor('Brush389')
+            self.RemoveActor('Brush392')
+            self.RemoveActor('Brush396')
+            self.RemoveActor('Brush395')
+            self.RemoveActor('Brush390')
 
     def after_finalize(self):
         pass
@@ -49,9 +63,8 @@ class Map:
             if stripped.startswith('Begin Actor '):
                 actor = CreateActor(self, line)
                 actor.Read(file, self.mult_coords)
-                if actor.objectname not in self.actornames:
-                    self.actornames[actor.objectname] = actor
-                    self.actors.append(actor)
+                if actor.objectname not in self.actors:
+                    self.actors[actor.objectname] = actor
             elif stripped == 'End Map':
                 break
             else:
@@ -69,7 +82,7 @@ class Map:
     
     def ToString(self):
         s = 'Begin Map\n'
-        for a in self.actors:
+        for a in self.actors.values():
             s += str(a)
         s += 'End Map\n'
         return s
