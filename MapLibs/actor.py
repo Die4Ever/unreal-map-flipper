@@ -61,6 +61,7 @@ classes_rot_offsets = dict(
     ShowerFaucet=16384,
     ShowerHead=16384,
     LightSwitch=16384,
+    Button1=16384,
 
     # auto generated list of Decorations (any non-zero values should be moved above this line):
     DeusExDecoration=0,
@@ -69,7 +70,6 @@ classes_rot_offsets = dict(
     Basketball=0,
     BoneFemur=0,
     BoneSkull=0,
-    Button1=0,
     Cart=0,
     CeilingFan=0,
     CeilingFanMotor=0,
