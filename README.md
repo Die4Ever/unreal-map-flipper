@@ -5,11 +5,9 @@ Unreal Map Flipper (work in progress)
 
 2. Now go to Options -> Rebuild (F8)
 
-    2A. Recommended to go to the BSP tab and set Optimization to Optimal, and the Minimize Cuts slider all the way to the left. (UnrealEd will remember this setting as long as the program is open)
+    2A. In the Geometry tab click the Rebuild Geometry button.
 
-    2B. Now go back to the Geometry tab and click the Rebuild Geometry button.
-
-    2C. Then go to the Lighting tab and click the Paths Define button. (Why is this in the Lighting tab?)
+    2B. Then go to the Lighting tab and click the Paths Define button. (Why is this in the Lighting tab?)
     
 3. If you don't have any textures that means you didn't have the original map loaded when you did the import.
 
