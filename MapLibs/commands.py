@@ -56,15 +56,18 @@ def DoAll():
     dx = Path(r'C:\Games\DX\Deus Ex Rando\System')
     mapsdir = dx.parent / 'Maps'
     resume=False#
-    resumeMap='09_NYC_ShipBelow'
+    resumeMap=''
 
     for export in indir.glob('*.t3d'):
         last_map = export.stem
         export = indir / (last_map+'.t3d')
         CreateImport(export)
     
-    # redoing the processing on existing t3d files doesn't care about this, more convenient to die here
-    assert len(list(donedir.glob('*')))==0, 'empty '+str(donedir)+' before starting --all'
+    # redoing the processing on existing t3d files doesn't care about this
+    if len(list(donedir.glob('*'))) != 0:
+        print('ERROR: empty '+str(donedir)+' before starting --all')
+        return
+    
     for map in mapsdir.glob('*.dx'):
         last_map = map.stem
         if last_map==resumeMap:
@@ -81,3 +84,13 @@ def DoAll():
             sleep(0.2)
         ReadExport(export)
 
+
+def DXRando():
+    # first do all the mirrored maps
+    DoAll()
+    # now do fixes for non mirrored maps
+    mult_coords = None# same as (1,1,1) but without the filename postfix
+    ProcFile(indir/'03_NYC_Airfield.t3d', outdir, mult_coords)
+    ProcFile(indir/'03_NYC_BatteryPark.t3d', outdir, mult_coords)
+    ProcFile(indir/'12_Vandenberg_Cmd.t3d', outdir, mult_coords)
+    ProcFile(indir/'15_Area51_Bunker.t3d', outdir, mult_coords)

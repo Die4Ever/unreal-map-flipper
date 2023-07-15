@@ -40,6 +40,15 @@ class Map:
         return True
 
     def before_finalize(self):
+        #if self.name in ('02_NYC_Hotel', '04_NYC_Hotel', '08_NYC_Hotel'):
+            # needs a lot of work lol
+            # brush = self.actors.get('DeusExMover3')
+            # if brush:
+            #     brush.useMirrorVerts = True
+            # brush = self.actors.get('DeusExMover4')
+            # if brush:
+            #     brush.useMirrorVerts = True
+
         if self.name == '02_NYC_Warehouse':
             # remove the stupid fence parts that aren't breakable
             self.RemoveActor('Brush407')
@@ -49,6 +58,26 @@ class Map:
             self.RemoveActor('Brush396')
             self.RemoveActor('Brush395')
             self.RemoveActor('Brush390')
+
+        elif self.name == '03_NYC_Airfield':
+            brush = self.actors.get('Brush738')
+            if brush:
+                brush.RemovePolyFlag(5)
+        
+        elif self.name == '03_NYC_BatteryPark':
+            brush = self.actors.get('DeusExMover2')
+            if brush:
+                brush.useMirrorVerts = True
+
+        elif self.name == '12_Vandenburg_Cmd':
+            brush = self.actors.get('Brush341')
+            if brush:
+                brush.RemovePolyFlag(5)
+
+        elif self.name == '15_Area51_Bunker':
+            brush = self.actors.get('Brush386')
+            if brush:
+                brush.RemovePolyFlag(7, polys=[1])
 
     def after_finalize(self):
         pass

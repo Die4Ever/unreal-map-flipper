@@ -6,13 +6,16 @@ from MapLibs import commands
 # TODO: arguments to do a single file
 parser = argparse.ArgumentParser(description='Unreal Map Flipper/Transformer')
 parser.add_argument('--all', action="store_true", help='Do all the maps')
+parser.add_argument('--dxrando', action="store_true", help='Do all the DXRando maps')
 parser.add_argument('--source', help='Input t3d file')
 parser.add_argument('--dest', help='Output t3d file')
 parser.add_argument('--mult', help='Multiplication vector in the format of (-1,1,1)')
 args = parser.parse_args()
 
 
-if args.all:
+if args.dxrando:
+    commands.DXRando()
+elif args.all:
     commands.DoAll()
 elif args.source and args.dest and args.mult:
     source = Path(args.source)

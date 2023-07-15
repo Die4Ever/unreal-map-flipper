@@ -7,7 +7,7 @@ poly = re.compile(r'^(\s*\w+\s+)'+coord+','+coord+','+coord+r'(\s*$)')
 
 poly_prop = re.compile(r'^(\s*)(\w+)(\s+)(.*)$')
 
-flags_regex = re.compile(r'^\s*Begin Polygon.*Flags=(\d+)\s+.*$')
+flags_regex = re.compile(r'^(\s*Begin Polygon.*Flags=)(\d+)(\s+.*)$')
 
 pan_regex = re.compile(r'^(\s+Pan\s+)U=([^\s]+)\s+V=([^\s]+)(\s*)$')
 
@@ -62,6 +62,8 @@ classes_rot_offsets = dict(
     ShowerHead=16384,
     LightSwitch=16384,
     Button1=16384,
+    AttackHelicopter=16384,
+    BlackHelicopter=16384,
 
     # auto generated list of Decorations (any non-zero values should be moved above this line):
     DeusExDecoration=0,
@@ -213,8 +215,6 @@ classes_rot_offsets = dict(
     Vase1=0,
     Vase2=0,
     Vehicles=0,
-    AttackHelicopter=0,
-    BlackHelicopter=0,
     MiniSub=0,
     NYPoliceBoat=0,
     Van=0,
@@ -428,6 +428,10 @@ class Actor:
         self.newRot = (0,0,0)
         self.oldPrePivot = (0,0,0)
         self.newPrePivot = (0,0,0)
+        self.init()
+
+    def init(self):
+        pass
     
 
     def Read(self, file, mult_coords:tuple|None):
@@ -600,9 +604,13 @@ class Actor:
 
 
 class OldBrush(Actor): # well this was a big waste of time? lol
+    def init(self):
+        super().init()
+        self.useMirrorVerts = True
+    
     def _Finalize(self, mult_coords):# TODO: more checks in finalize
         super()._Finalize(mult_coords)
-        if type(self) == OldBrush:
+        if self.useMirrorVerts:
             self.MirrorVerts(mult_coords)
 
     def MirrorVerts(self, mult_coords):
@@ -744,18 +752,41 @@ class OldBrush(Actor): # well this was a big waste of time? lol
             line:str = file.readline()
 
         raise RuntimeError('unexpected end of polygon?')
+    
+    def RemovePolyFlag(self, bit, polys=None):
+        i=-1
+        for p in self.polylist:
+            i+=1
+            if polys and i not in polys:
+                continue
+            begin = self.lines[p['Begin']]
+            m = flags_regex.match(begin)
+            if not m:
+                return
+            flags = int(m.group(2))
+            mask = 1<<bit
+            if flags and flags & mask:
+                flags ^= mask
+                line = m.group(1) + str(flags) + m.group(3)
+                self.lines[p['Begin']] = line
 
 
 class Brush(OldBrush):
+    def init(self):
+        super().init()
+        self.useMirrorVerts = False
+
     def _Finalize(self, mult_coords):
         super()._Finalize(mult_coords)
+        if self.useMirrorVerts:
+            return
 
         # check if this is a portal
         for p in self.polylist:
             begin = self.lines[p['Begin']]
             flags = flags_regex.match(begin)
             if flags:
-                flags = int(flags.group(1))
+                flags = int(flags.group(2))
             # if portal, increase the size slightly to fix rounding issues (vandenberg tunnels, of course)
             if flags and flags & 67108864 and mult_coords is not None:
                 mult_coords = (mult_coords[0]*1.001, mult_coords[1]*1.001, mult_coords[2]*1.001)
